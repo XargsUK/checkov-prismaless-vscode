@@ -8,16 +8,16 @@ on:
 jobs:
   build:
     name: Publish
-    runs-on: [self-hosted, public, linux, x64]
+    runs-on: [ubuntu-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: master
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14
+          node-version: 20
       - name: Publish to Marketplace
         run: |
           npm ci

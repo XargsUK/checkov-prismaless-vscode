@@ -9,19 +9,9 @@ import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as path from 'path';
 import { FileCache, ResultsCache } from './checkov/models';
-import axios from 'axios';
 
 const extensionData = vscode.extensions.getExtension('bridgecrew.checkov');
 export const extensionVersion = extensionData ? extensionData.packageJSON.version : 'unknown';
-
-// Matches the following URLs with group 4 == 'org/repo':
-// git://github.com/org/repo.git
-// git@github.com:org/repo.git
-// https://github.com/org/repo.git
-// eslint-disable-next-line no-useless-escape
-
-// See comment in "parseRepoName"
-// const repoUrlRegex = /^(https|git)(:\/\/|@)([^\/:]+)[\/:](.+).git$/;
 
 export const isWindows = process.platform === 'win32';
 
@@ -29,14 +19,10 @@ export const cacheDateKey = 'CKV_CACHE_DATE';
 export const cacheResultsKey = 'CKV_CACHE_RESULTS';
 export const checkovVersionKey = 'CKV_VERSION';
 
-export const checkovVersionApi = 'api/v1/checkovVersion';
-
 const maxCacheSizePerFile = 10;
 
 const unsupportedExtensions: string[] = ['.log'];
 const unsupportedFileNames: string[] = [];
-
-export type TokenType = 'bc-token' | 'prisma';
 
 export type FileScanCacheEntry = {
     fileHash: string,
@@ -218,53 +204,6 @@ const parseRepoName = (repoUrl: string): string | null => {
     // example: codecommit::us-west-2://repo_name
     // gets parsed as `/repo_name` and there is no good value to use as the repo "org"
     return repoName.split('/').some(s => s === '') ? null : repoName;
-
-    // Commenting out for now, because the code above is a temporary workaround to the case where the git server
-    // is not hosted at the root level (e.g., https://company.example.com/git)
-    // const result = repoUrlRegex.exec(repoUrl);
-    // return result ? result[4] : null;
-};
-
-export const getTokenType = (token: string): TokenType => token.includes('::') ? 'prisma' : 'bc-token';
-
-export const getPlatformCheckovVersion = async (token: string, prismaApiUrl: string | undefined, logger: winston.Logger): Promise<string> => {
-    
-    const url = `${prismaApiUrl ? `${prismaApiUrl}/code/` : 'https://www.bridgecrew.cloud/'}${checkovVersionApi}`;
-
-    logger.debug(`Checkov version URL: ${url}`);
-
-    if (prismaApiUrl) {
-        token = await getPrismaLoginToken(token, prismaApiUrl);
-        logger.debug('Successfully authenticated to Prisma /login');
-    }
-    
-    const resp = await axios.get(url, {
-        headers: {
-            'Authorization': token
-        }
-    });
-
-    if (resp.status !== 200) {
-        throw Error(`Got unexpected response from platform version API (status code ${resp.status}): ${resp.data}`);
-    }
-
-    return resp.data.version;
-};
-
-const getPrismaLoginToken = async (token: string, prismaApiUrl: string): Promise<string> => {
-    const url = `${prismaApiUrl}/login`;
-    const [username, password] = token.split('::');
-    const body = { username, password };
-    const headers = {
-        'Content-Type': 'application/json'
-    };
-    const resp = await axios.post(url, body, { headers });
-
-    if (resp.status !== 200) {
-        throw Error(`Got unexpected response from Prisma login endpoint (status code ${resp.status}): ${resp.data}`);
-    }
-
-    return resp.data.token;
 };
 
 export const normalizePath = (filePath: string): string[] => {

@@ -7,7 +7,7 @@ import { applyDiagnostics } from './diagnostics';
 import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
 import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
-import { assureTokenSet, getCheckovVersion, shouldDisableErrorMessage, getPathToCert, getUseBcIds, getPrismaUrl, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks } from './configuration';
+import { getCheckovVersion, shouldDisableErrorMessage, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
 
@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }),
         vscode.commands.registerCommand(OPEN_CONFIGURATION_COMMAND, () => {
-            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:Bridgecrew.checkov');
+            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:XargsUK.checkov-prismaless');
         }),
         vscode.commands.registerCommand(OPEN_EXTERNAL_COMMAND, (uri: vscode.Uri) => vscode.env.openExternal(uri)),
         vscode.commands.registerCommand(GET_INSTALLATION_DETAILS_COMMAND, async () => {
@@ -139,8 +139,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const startScan = async (fileUri?: vscode.Uri, useCache = false): Promise<void> => {
         resetCancelTokenSource();
-        const token = assureTokenSet(logger, OPEN_CONFIGURATION_COMMAND, checkovInstallation);
-        const prismaUrl = getPrismaUrl();
         const certPath = getPathToCert();
         const useBcIds = getUseBcIds();
         const debugLogs = getUseDebugLogs();
@@ -152,7 +150,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
         if (!fileUri && vscode.window.activeTextEditor && !isSupportedFileType(vscode.window.activeTextEditor.document.fileName, true))
             return;
-        if (!!token && vscode.window.activeTextEditor) {
+        if (vscode.window.activeTextEditor) {
             if (useCache) {
                 const fileToScan = fileUri?.fsPath || vscode.window.activeTextEditor.document.fileName;
                 const hash = getFileHash(fileToScan);
@@ -166,11 +164,11 @@ export function activate(context: vscode.ExtensionContext): void {
                     logger.debug(`useCache is true, but did not find cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
                 }
             }
-            await runScan(vscode.window.activeTextEditor, token, certPath, useBcIds, debugLogs, noCertVerify, checkovRunCancelTokenSource.token, checkovVersion, prismaUrl, externalChecksDir, fileUri, skipFrameworks, frameworks);
+            await runScan(vscode.window.activeTextEditor, certPath, useBcIds, debugLogs, noCertVerify, checkovRunCancelTokenSource.token, checkovVersion, externalChecksDir, fileUri, skipFrameworks, frameworks);
         }
     };
 
-    const runScan = debounce(async (editor: vscode.TextEditor, token: string, certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, checkovVersion: string, prismaUrl: string | undefined, externalChecksDir: string | undefined, fileUri?: vscode.Uri, skipFrameworks?: string[] | undefined, frameworks?: string[] | undefined): Promise<void> => {
+    const runScan = debounce(async (editor: vscode.TextEditor, certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, checkovVersion: string, externalChecksDir: string | undefined, fileUri?: vscode.Uri, skipFrameworks?: string[] | undefined, frameworks?: string[] | undefined): Promise<void> => {
         logger.info('Starting to scan.');
         try {
             setSyncingStatusBarItem(checkovInstallation?.version, 'Checkov scanning');
@@ -182,7 +180,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            const checkovResponse = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, token, certPath, useBcIds, debugLogs, noCertVerify, cancelToken, configPath, checkovVersion, prismaUrl, externalChecksDir, skipFrameworks, frameworks);
+            const checkovResponse = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, certPath, useBcIds, debugLogs, noCertVerify, cancelToken, configPath, checkovVersion, externalChecksDir, skipFrameworks, frameworks);
             handleScanResults(filePath, editor, context.workspaceState, checkovResponse.results.failedChecks, logger);
         } catch (error) {
             if (cancelToken.isCancellationRequested) {
