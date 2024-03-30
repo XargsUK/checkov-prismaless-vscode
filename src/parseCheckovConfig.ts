@@ -14,5 +14,3 @@ export const getConfigFilePath = (logger: Logger): string | undefined => {
     }
     return undefined;
 };
-
-
