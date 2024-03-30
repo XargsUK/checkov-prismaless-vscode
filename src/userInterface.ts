@@ -14,7 +14,7 @@ export const showContactUsDetails = (logDirectoryPath: vscode.Uri, logFileName: 
             }
 
             const uri =
-                choice === 'Open issue' ? vscode.Uri.parse('https://github.com/bridgecrewio/checkov-vscode')
+                choice === 'Open issue' ? vscode.Uri.parse('https://github.com/XargsUK/checkov-prismaless-vscode')
                     : vscode.Uri.parse('https://codifiedsecurity.slack.com/');
 
             vscode.env.openExternal(uri);
