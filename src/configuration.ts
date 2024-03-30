@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
-import { setMissingConfigurationStatusBarItem } from './userInterface';
 import * as semver from 'semver';
-import { CheckovInstallation } from './checkov';
 import { asyncExec } from './utils';
 
 const minCheckovVersion = '2.0.0';

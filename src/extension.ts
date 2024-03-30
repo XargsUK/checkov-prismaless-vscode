@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { TextEncoder } from 'util';
 import debounce from 'lodash/debounce';
 import { Logger } from 'winston';
 import { CheckovInstallation, FailedCheckovCheck, installOrUpdateCheckov, runCheckovScan } from './checkov';
@@ -13,7 +12,6 @@ import { getConfigFilePath } from './parseCheckovConfig';
 
 export const CHECKOV_MAP = 'checkovMap';
 const logFileName = 'checkov.log';
-const tempScanFile = 'temp.tf';
 
 // this method is called when extension is activated
 export function activate(context: vscode.ExtensionContext): void {
