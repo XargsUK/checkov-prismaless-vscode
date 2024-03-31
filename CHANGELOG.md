@@ -2,7 +2,22 @@
 
 All notable changes to the "checkov" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+
+## [1.0.106] - 2024-03-31
+
+### Fixed
+- Windows python3 executable issue (#2)
+- Commands not working
+- Updated follow-redirects, minimatch and nanoid dependencies to fix security vulnerabilities: [CVE-2024-28849](https://github.com/advisories/GHSA-cxjh-pqwp-8mfp) / [CVE-2022-25883](https://github.com/advisories/GHSA-c2qf-rxjj-qqgw) / [CVE-2021-23566](https://github.com/advisories/GHSA-qrpm-p2h7-hrv2)
+
+### Changed
+- vscode-test package changed to @vscode/test-electron
+
+### Removed
+- Axios is now unused and has been removed. The version of axios used in the original extension was vulnerable to a high severity security issue [CVE-2023-45857](https://github.com/advisories/GHSA-wf5p-g6vw-rhxx).
+
+## [1.0.105] - 2024-03-30
 
 ### Changed
 
@@ -10,12 +25,3 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Help URL to point to the correct GitHub repository.
 - README.md updated for consistency, and added a section on why the fork was created.
 
-
-## [Unreleased]
-
-- Initial release.
-- Run `Checkov` on a file.
-- Display diagnostics errors with details of the error and a link to Bridgecrew platform.
-- Install and update `Checkov` with - Brew(mac) or python pip3.
-- Use Bridgecrew token from configuration and add it to Checkov run.
-- Save logs to a file, and display message on errors.
