@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import * as semver from 'semver';
-import { asyncExec } from './utils';
+import { isWindows, asyncExec } from './utils';
 
 const minCheckovVersion = '2.0.0';
 const minPythonVersion = '3.7.0';
@@ -71,13 +71,22 @@ export const getCheckovVersion = async (logger: Logger): Promise<string> => {
 
 export const verifyPythonVersion = async (logger: Logger, command = 'python3 --version'): Promise<void> => {
     logger.debug(`Getting python version with command: ${command}`);
-    const [pythonVersionResponse] = await asyncExec(command);
-    logger.debug('Raw output:');
-    logger.debug(pythonVersionResponse);
-    const pythonVersion = pythonVersionResponse.split(' ')[1];
-    logger.debug(`Python version: ${pythonVersion}`);
-    if (semver.lt(pythonVersion, minPythonVersion)){
-        throw Error(`Invalid python version: ${pythonVersion} (must be >=${minPythonVersion})`);
+    try {
+        const [pythonVersionResponse] = await asyncExec(command);
+        logger.debug('Raw output:');
+        logger.debug(pythonVersionResponse);
+        const pythonVersion = pythonVersionResponse.split(' ')[1];
+        logger.debug(`Python version: ${pythonVersion}`);
+        if (semver.lt(pythonVersion, minPythonVersion)){
+            throw Error(`Invalid python version: ${pythonVersion} (must be >=${minPythonVersion})`);
+        }
+    } catch (error) {
+        if (isWindows && command === 'python3 --version') {
+            logger.debug('python3 executable not found on Windows, falling back to python');
+            await verifyPythonVersion(logger, 'python --version');
+        } else {
+            throw error;
+        }
     }
 };
 
