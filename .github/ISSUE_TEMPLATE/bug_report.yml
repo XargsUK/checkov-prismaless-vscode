@@ -1,0 +1,68 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+projects: ["XargsUK/4", "XargsUK/4"]
+assignees:
+  - XargsUK
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: What version of Python are you using?
+      placeholder: ex. Python 3.8.5
+    validations:
+      required: true
+  - type: input
+    id: checkov-install-method
+    attributes:
+      label: Checkov Installation Method
+      description: How did you install Checkov? (e.g., pip, Docker)
+      placeholder: e.g., pip, Docker, pipx, venv, etc.
+    validations:
+      required: true
+  - type: input
+    id: checkovprismaless-version
+    attributes:
+      label: CheckovPrismaless Version
+      description: What version of CheckovPrismaless are you using?
+      placeholder: ex. 1.0.2
+    validations:
+      required: true
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VSCode Version
+      description: What version of Visual Studio Code are you using?
+      placeholder: ex. 1.52.1
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      placeholder: ex. Windows 10, Ubuntu 20.04
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the Bug
+      description: Please describe what happened and what you expected to happen.
+      placeholder: Detail the issue here.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide detailed steps to reproduce the bug.
+      placeholder: Detail the steps here.
+    validations:
+      required: true
