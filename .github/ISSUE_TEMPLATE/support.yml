@@ -1,0 +1,42 @@
+name: Support Request
+description: Request support or ask a question.
+title: "[Support]: "
+labels: ["support"]
+projects: ["XargsUK/4", "XargsUK/4"]
+assignees:
+  - XargsUK
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out for support!
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: What version of Python are you using?
+      placeholder: ex. Python 3.8.5
+    validations:
+      required: true
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: Problem Description
+      description: Describe the issue you are facing.
+      placeholder: Detail your problem or question here.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      placeholder: ex. Windows 10, Ubuntu 20.04
+    validations:
+      required: true
+  - type: input
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information or screenshots you can provide?
+      placeholder: Additional details here.

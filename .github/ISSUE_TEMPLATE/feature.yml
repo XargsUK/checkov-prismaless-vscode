@@ -1,0 +1,28 @@
+name: Feature Request
+description: Suggest a new feature.
+title: "[Feature]: "
+labels: ["feature"]
+projects: ["XargsUK/4", "XargsUK/4"]
+assignees:
+  - XargsUK
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a feature!
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: What feature would you like to see?
+      placeholder: Describe the feature you are suggesting.
+    validations:
+      required: true
+  - type: input
+    id: benefit
+    attributes:
+      label: Benefit
+      description: How would this feature benefit users?
+      placeholder: Explain how this feature would improve the project.
+    validations:
+      required: true

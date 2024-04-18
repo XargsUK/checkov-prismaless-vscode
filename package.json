@@ -5,13 +5,14 @@
   "publisher": "XargsUK",
   "description": "Find and fix misconfigurations in infrastructure-as-code manifests like Terraform, Kubernetes, Cloudformation, Serverless framework, Arm templates using Checkov - static analysis for infrastructure as code.",
   "license": "Apache-2.0",
+  
   "icon": "docs/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/XargsUK/checkov-prismaless.git"
+    "url": "https://github.com/XargsUK/checkov-prismaless-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/XargsUK/checkov-prismaless/issues"
+    "url": "https://github.com/XargsUK/checkov-prismaless-vscode/issues"
   },
   "engines": {
     "vscode": "^1.52.0"

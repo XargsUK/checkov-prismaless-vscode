@@ -3,17 +3,14 @@ name: PR Test
 on: pull_request
 
 jobs:
-  lint:
-    runs-on: [ubuntu-latest]
+  sonarqube:
+    name: Build and analyze
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install Dependencies
-        run: npm ci
-      - name: Run Compile
-        run: npm run compile
-      - name: Run Linter
-        run: npm run lint
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
