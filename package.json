@@ -1,11 +1,10 @@
 {
   "name": "checkov-prismaless",
-  "version": "1.0.106",
+  "version": "1.0.107",
   "displayName": "CheckovPrismaless",
   "publisher": "XargsUK",
   "description": "Find and fix misconfigurations in infrastructure-as-code manifests like Terraform, Kubernetes, Cloudformation, Serverless framework, Arm templates using Checkov - static analysis for infrastructure as code.",
   "license": "Apache-2.0",
-  
   "icon": "docs/icon.png",
   "repository": {
     "type": "git",
