@@ -9,6 +9,8 @@ import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as path from 'path';
 import { FileCache, ResultsCache } from './checkov/models';
+import axios from 'axios';
+
 
 const extensionData = vscode.extensions.getExtension('bridgecrew.checkov');
 export const extensionVersion = extensionData ? extensionData.packageJSON.version : 'unknown';
@@ -23,6 +25,8 @@ const maxCacheSizePerFile = 10;
 
 const unsupportedExtensions: string[] = ['.log'];
 const unsupportedFileNames: string[] = [];
+
+const SEVERITY_MAP_URL = 'https://raw.githubusercontent.com/xargsUK/checkov-prismaless-vscode/feat/add-severity/resources/severity.json';
 
 export type FileScanCacheEntry = {
     fileHash: string,
@@ -293,4 +297,42 @@ const findSavedScanForFile = (fileHash: string, filename: string, fileCache: Fil
 
 const fileCacheContainsEntry = (element: FileScanCacheEntry, fileCache: FileCache): boolean => {
     return findSavedScanForFile(element.fileHash, element.filename, fileCache) !== undefined;
+};
+
+type SeverityMap = Record<string, string>;
+
+/**
+ * Updates or fetches the local severity map from GitHub.
+ * @param context The extension context provided by VSCode.
+ * @returns A promise that resolves to the severity map, either updated or fetched from local storage.
+ */
+export async function updateSeverityMap(context: vscode.ExtensionContext): Promise<SeverityMap> {
+    const localSeverityPath = path.join(context.extensionPath, 'resources', 'severity.json');
+    try {
+        const response = await axios.get<SeverityMap>(SEVERITY_MAP_URL); // Assume axios is already imported
+        const remoteSeverityData: SeverityMap = response.data;
+        const localSeverityData: SeverityMap = fs.existsSync(localSeverityPath) ? JSON.parse(fs.readFileSync(localSeverityPath, 'utf8')) : {};
+
+        if (!localSeverityData || JSON.stringify(remoteSeverityData) !== JSON.stringify(localSeverityData)) {
+            fs.writeFileSync(localSeverityPath, JSON.stringify(remoteSeverityData, null, 2));
+            vscode.window.showInformationMessage('Severity map has been updated from the repository.');
+        }
+        return remoteSeverityData;
+    } catch (error) {
+        if (fs.existsSync(localSeverityPath)) {
+            vscode.window.showInformationMessage('Using the local severity map.');
+            return JSON.parse(fs.readFileSync(localSeverityPath, 'utf8'));
+        }
+        vscode.window.showErrorMessage('Failed to update the severity map from the repository and no local copy is available.');
+        return {};
+    }
+}
+
+// Additional utility function to load the severity map into memory
+export const loadSeverityMap = (context: vscode.ExtensionContext): Record<string, string> => {
+    const localSeverityPath = path.join(context.extensionPath, 'resources', 'severity.json');
+    if (fs.existsSync(localSeverityPath)) {
+        return JSON.parse(fs.readFileSync(localSeverityPath, 'utf8'));
+    }
+    return {};
 };

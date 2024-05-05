@@ -4,7 +4,7 @@ import { Logger } from 'winston';
 import { CheckovInstallation, FailedCheckovCheck, installOrUpdateCheckov, runCheckovScan } from './checkov';
 import { applyDiagnostics } from './diagnostics';
 import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
-import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
+import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey, updateSeverityMap, loadSeverityMap } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
 import { getCheckovVersion, shouldDisableErrorMessage, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
@@ -23,6 +23,16 @@ export function activate(context: vscode.ExtensionContext): void {
     let checkovRunCancelTokenSource = new vscode.CancellationTokenSource();
     let checkovInstallation : CheckovInstallation | null = null;
     const checkovInstallationDir = vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath;
+
+    // Update and load the severity map from GitHub
+    updateSeverityMap(context).then(() => {
+        logger.info('Severity map has been updated.');
+        // If needed, load the severity map into memory or pass it to another function
+        const severityMap = loadSeverityMap(context);
+        // Now you can use severityMap throughout your extension
+    }).catch(err => {
+        logger.error('Failed to update the severity map:', err);
+    });
 
     const resetCancelTokenSource = () => {
         checkovRunCancelTokenSource.cancel();
