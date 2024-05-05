@@ -1,0 +1,3862 @@
+[
+  {
+    "Checkov ID": "CKV_GLB_4",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GLB_1",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GLB_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GIT_4",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GITHUB_5",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GIT_3",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GIT_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_41",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_45",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_46",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_88",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_32",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_89",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_69",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_59",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_87",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_5",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_6",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_83",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_84",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_323",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_230",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_137",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_175",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_233",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_164",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_198",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_130",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_248",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_2",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_352",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_213",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_122",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_90",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_25",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_24",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_291",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_23",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_232",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_152",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_277",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_365",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_138",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_328",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_148",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_306",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_AWS_229",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_131",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_154",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_123",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_196",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_231",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_174",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_192",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_34",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_260",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_50",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_173",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_33",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_110",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_275",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_364",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_289",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_287",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_12",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_129",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_9",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_40",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_61",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_63",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_355",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_10",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_359",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_162",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_111",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_283",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_109",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_286",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_15",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_72",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_62",
+    "Severity": "CRITICAL"
+  },
+  {
+    "Checkov ID": "CKV_AWS_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_358",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_128",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_108",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_290",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_288",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_274",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_60",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_161",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_49",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_107",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_11",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_309",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_273",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_13",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_356",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_14",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_348",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_249",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_75",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_324",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_276",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_76",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_80",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_314",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_176",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_333",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_48",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_124",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_66",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_35",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_317",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_118",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_285",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_91",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_101",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_121",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_126",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_71",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_65",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_92",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_325",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_338",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_73",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_284",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_86",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_36",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_7",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_95",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_67",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_353",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_85",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_100",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_38",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_39",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_58",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_339",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_37",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_149",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_218",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_263",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_117",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_240",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_219",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_28",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_344",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_341",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_313",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_214",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_257",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_210",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_51",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_120",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_264",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_221",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_243",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_329",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_113",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_211",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_145",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_186",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_114",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_294",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_AWS_165",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_332",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_94",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_191",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_158",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_143",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_102",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_113",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_96",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_ALI_41",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_271",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_261",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_204",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_166",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_267",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_265",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_136",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_235",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_127",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_77",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_44",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_195",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_361",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_199",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_155",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_74",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_292",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_119",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_120",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_222",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_360",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_331",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_150",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_217",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_259",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_241",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_308",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_169",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_362",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_270",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_98",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_184",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_349",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_296",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_208",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_320",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_242",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_207",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_322",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_172",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_78",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_8",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_330",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_189",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_178",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_193",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_216",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_206",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_160",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_42",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_133",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_103",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_228",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_203",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_300",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_252",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_297",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_156",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_68",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_144",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_226",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_200",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_246",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_31",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_311",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_27",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_142",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_182",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_268",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_197",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_171",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_340",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_326",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_307",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_AWS_354",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_301",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_47",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_168",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_181",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_104",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_363",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_253",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_202",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_97",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_43",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_205",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_343",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_304",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_298",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_247",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_197",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_342",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_140",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_106",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_266",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_316",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_134",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_282",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_345",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_302",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_315",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_336",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_335",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_357",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_209",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_177",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_234",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_195",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_157",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_347",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_30",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_238",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_220",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_116",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_280",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_255",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_170",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_159",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_26",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_64",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_258",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_350",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_185",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_312",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_272",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_99",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_112",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_215",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_319",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_251",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_293",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_153",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_180",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_16",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_239",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_225",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_82",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_81",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_262",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_236",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_346",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_250",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_22",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_334",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_269",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_3",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_115",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_135",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_327",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_AWS_227",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_139",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_303",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_278",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_245",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_321",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_146",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_281",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_183",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_163",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_237",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_254",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_147",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_351",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_179",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_212",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_305",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_256",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_295",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_318",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_194",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_190",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_244",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_224",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_337",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_223",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_141",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_310",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_187",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_79",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_249",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_105",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_29",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_279",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_119",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_201",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_167",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_55",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_19",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AWS_18",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_57",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_21",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_56",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_70",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_20",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AWS_93",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_54",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AWS_53",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_5",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_9",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_4",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_10",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_2",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_12",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_13",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_14",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_6",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_16",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_8",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_PAN_7",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_PAN_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_PAN_15",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENSTACK_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENSTACK_5",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENSTACK_4",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENSTACK_3",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENSTACK_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_80",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_106",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_34",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_45",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_111",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_148",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_121",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_39",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_22",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_1",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_110",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_114",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_107",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_79",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_26",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_143",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_42",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_104",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_31",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_10",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_140",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_105",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_29",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_28",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_147",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_36",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_74",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_89",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_21",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_30",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_11",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_96",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_37",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_153",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_97",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_158",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_7",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_35",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_151",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_73",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_91",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_43",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_144",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_78",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_113",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_49",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_13",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_18",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_72",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_75",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_6",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_119",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_94",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_108",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_85",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_93",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_77",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_115",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_40",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_138",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_81",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_145",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_38",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_99",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_149",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_141",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_15",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_25",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_27",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_116",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_23",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_83",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_117",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_146",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_95",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_152",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_139",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_86",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_90",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_32",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_102",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_88",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_9",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_8",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_70",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_4",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_41",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_69",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_100",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_16",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_14",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_155",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_71",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_92",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_156",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_82",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_84",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_157",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_24",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_68",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_154",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_33",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_112",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_20",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_12",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_K8S_19",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_5",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_K8S_118",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_K8S_44",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_22",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_16",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_17",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_76",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_19",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_21",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_20",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OCI_18",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_12",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_11",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_13",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_14",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_15",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_7",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_3",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_8",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_9",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_10",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_6",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_1",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_4",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OCI_5",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_6",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_8",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_5",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_9",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_7",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_4",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_3",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_2",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_10",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_DOCKER_11",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_TF_1",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_110",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_111",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_109",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_108",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_GCP_26",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_51",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_50",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_54",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_55",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_59",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_58",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_57",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_52",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_56",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_60",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_53",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_99",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_28",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_89",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_103",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_98",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_40",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_101",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_102",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_100",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_94",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_88",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_36",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_76",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_3",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_GCP_88",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_34",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_73",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_27",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_4",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_16",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_75",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_77",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_32",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_33",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_106",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_27",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_11",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_35",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_46",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_116",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_41",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_49",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_45",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_44",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_112",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_47",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_31",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_42",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_113",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_117",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_118",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_30",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_48",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_115",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_10",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_9",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_72",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_67",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_20",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_64",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_19",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_71",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_18",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_1",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_13",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_25",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_70",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_68",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_23",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_24",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_66",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_8",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_12",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_22",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_7",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_61",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_21",
+    "Severity": "INFO"
+  },
+  {
+    "Checkov ID": "CKV_GCP_69",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_65",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_79",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_86",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_37",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_83",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_74",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_6",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_107",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_114",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_82",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_96",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_87",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_92",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_90",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_122",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_78",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_104",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_119",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_121",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_91",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_43",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_80",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_97",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_95",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_105",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_81",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_15",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_85",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_93",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_84",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_39",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_38",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_14",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_120",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_GCP_29",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_GCP_63",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_GCP_62",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_65",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_23",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_66",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_38",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_24",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_37",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_224",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_33",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_63",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_146",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_12",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_44",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_43",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_230",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_229",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_228",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_132",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_225",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_231",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_115",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_5",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_232",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_8",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_168",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_226",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_116",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_227",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_4",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_169",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_117",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_7",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_6",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_22",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_114",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_126",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_130",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_206",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_235",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_88",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_49",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_170",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_79",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_179",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_167",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_52",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_55",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_111",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_42",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_110",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_96",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_80",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_125",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_43",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_105",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_72",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_186",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_100",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_93",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_85",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_21",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_56",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_233",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_223",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_102",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_209",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_26",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_212",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_188",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_187",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_57",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_71",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_129",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_131",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_172",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_136",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_103",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_97",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_180",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_67",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_81",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_159",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_201",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_163",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_175",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_234",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_61",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_166",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_19",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_69",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_199",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_54",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_217",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_128",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_40",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_150",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_92",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_50",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_215",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_177",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_62",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_75",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_178",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_94",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_156",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_25",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_218",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_78",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_83",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_87",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_84",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_20",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_149",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_76",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_127",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_196",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_173",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_73",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_152",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_82",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_86",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_157",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_164",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_13",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_95",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_27",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_208",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_211",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_112",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_74",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_214",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_45",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_41",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_16",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_194",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_202",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_140",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_207",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_138",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_184",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_151",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_203",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_141",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_192",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_39",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_176",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_140",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_191",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_195",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_142",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_137",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_181",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_108",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_77",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_171",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_31",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_221",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_216",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_160",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_200",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_122",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_9",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_155",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_18",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_162",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_59",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_182",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_193",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_15",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_139",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_148",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_68",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_89",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_28",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_219",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_123",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_70",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_183",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_133",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_53",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_47",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_204",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_205",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_98",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_161",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_113",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_120",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_99",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_210",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_32",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_145",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_197",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_185",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_148",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_101",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_10",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_144",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_189",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_198",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_220",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_124",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_29",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_34",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_11",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_154",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_134",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_135",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_35",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_36",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_158",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_213",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_147",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_143",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_107",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_64",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_106",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_91",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_104",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_14",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_121",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_165",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_109",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_222",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_153",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_190",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_30",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_58",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_119",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_174",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_118",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_AZURE_48",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_ALI_23",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_15",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_18",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_16",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_19",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_24",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_13",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_14",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_28",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_35",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_9",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_8",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_38",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_7",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_37",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_30",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_27",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_36",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_1",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_6",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_11",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_44",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_10",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_31",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_26",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_32",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_20",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_41",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_29",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_33",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_3",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_ALI_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_ALI_43",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_42",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_21",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_22",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_25",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_4",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ALI_12",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ALI_5",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_3",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_20",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_8",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_21",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_13",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_11",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_19",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_18",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_17",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_12",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_10",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_1",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_16",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_2",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_14",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_15",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_9",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_4",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_5",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_6",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_OPENAPI_7",
+    "Severity": "HIGH"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_5",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_6",
+    "Severity": "LOW"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_3",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_1",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_2",
+    "Severity": "MEDIUM"
+  },
+  {
+    "Checkov ID": "CKV_ANSIBLE_4",
+    "Severity": "MEDIUM"
+  }
+]
