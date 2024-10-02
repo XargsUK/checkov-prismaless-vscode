@@ -47,7 +47,7 @@ const getDockerRunParams = (workspaceRoot: string | undefined, filePath: string,
     const [configFileDockerParams, configFileCheckovParams] = getPathParamsForDockerRun(configMountDir, configFilePath, '--config-file');
     const [externalChecksDockerParams, externalChecksCheckovParams] = getPathParamsForDockerRun(externalChecksMountDir, externalChecksDir, '--external-checks-dir');
     
-    const dockerParams = ['run', '--rm', '--tty', nameParam, ...debugLogParams, '--env', 'BC_SOURCE=vscode', '--env', `BC_SOURCE_VERSION=${extensionVersion}`,
+    const dockerParams = ['run', '--rm', '--tty', '--interactive', nameParam, ...debugLogParams, '--env', 'BC_SOURCE=vscode', '--env', `BC_SOURCE_VERSION=${extensionVersion}`,
         '-v', `"${mountRoot}:${dockerMountDir}"`, ...caCertDockerParams, ...configFileDockerParams, ...externalChecksDockerParams, '-w', dockerMountDir];
     
     return [...dockerParams, image, ...configFileCheckovParams, ...caCertCheckovParams, ...externalChecksCheckovParams, '-f', filePathToScan];
