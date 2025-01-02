@@ -33,7 +33,7 @@ const getPathParamsForDockerRun = (mountDir: string, filePath: string | undefine
     return [dockerParams, checkovParams];
 };
 
-const getDockerRunParams = (workspaceRoot: string | undefined, filePath: string, extensionVersion: string, configFilePath: string | undefined, checkovVersion: string | undefined, externalChecksDir: string |undefined, certPath: string | undefined, debugLogs: boolean | undefined, uniqueName: string) => {
+const getDockerRunParams = (logger: Logger, workspaceRoot: string | undefined, filePath: string, extensionVersion: string, configFilePath: string | undefined, checkovVersion: string, externalChecksDir: string |undefined, certPath: string | undefined, debugLogs: boolean | undefined, uniqueName: string) => {
     const image = `bridgecrew/checkov:${checkovVersion}`;
     const pathParams = getDockerPathParams(workspaceRoot, filePath);
     // if filepath is within the workspace, then the mount root will be the workspace path, and the file path will be the relative file path from there.
@@ -61,12 +61,17 @@ const cleanupStdout = (stdout: string) => stdout.replace(/.\[0m/g,''); // Clean 
 
 export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInstallation, extensionVersion: string, fileName: string, 
     certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, 
-    configPath: string | undefined, checkovVersion: string, externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined): Promise<CheckovResponse> => {
+    configPath: string | undefined, externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined): Promise<CheckovResponse> => {
     return new Promise((resolve, reject) => {   
         const { checkovInstallationMethod, checkovPath } = checkovInstallation;
         const timestamp = Date.now();
         const uniqueRunName = `vscode-checkov-${timestamp}`;
-        const dockerRunParams = checkovInstallationMethod === 'docker' ? getDockerRunParams(vscode.workspace.rootPath, fileName, extensionVersion, configPath, checkovInstallation.version, externalChecksDir, certPath, debugLogs, uniqueRunName) : [];
+        
+        // Get the version once and ensure it has a value
+        const version = checkovInstallation.version || 'latest';
+        
+        // Pass the resolved version to getDockerRunParams
+        const dockerRunParams = checkovInstallationMethod === 'docker' ? getDockerRunParams(logger, vscode.workspace.rootPath, fileName, extensionVersion, configPath, version, externalChecksDir, certPath, debugLogs, uniqueRunName) : [];
         const pipRunParams =  ['pipenv', 'pip3'].includes(checkovInstallationMethod) ? getpipRunParams(configPath) : [];
         const filePathParams = checkovInstallationMethod === 'docker' ? [] : ['-f', `"${fileName}"`];
         const certificateParams: string[] = certPath && checkovInstallationMethod !== 'docker' ? ['-ca', `"${certPath}"`] : [];

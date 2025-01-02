@@ -42,11 +42,15 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND, async () => {
             try {
                 extensionReady = false;
-                setSyncingStatusBarItem(checkovInstallation?.version, 'Updating Checkov');
+                setSyncingStatusBarItem(checkovInstallation?.actualVersion, 'Updating Checkov');
                 const checkovVersion = await getCheckovVersion(logger);
                 checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion);
                 logger.info('Checkov installation: ', checkovInstallation);
-                checkovInstallation.version = await runVersionCommand(logger, checkovInstallation.checkovPath, checkovVersion);
+                
+                // Only update version for non-Docker installations
+                if (checkovInstallation.checkovInstallationMethod !== 'docker') {
+                    checkovInstallation.version = await runVersionCommand(logger, checkovInstallation.checkovPath, checkovVersion);
+                }
 
                 const previousCheckovVersion = context.globalState.get(checkovVersionKey);
                 if (previousCheckovVersion !== checkovInstallation.version) {
@@ -57,12 +61,12 @@ export function activate(context: vscode.ExtensionContext): void {
                     logger.debug('Previously installed checkov version matches the newly installed one');
                 }
 
-                setReadyStatusBarItem(checkovInstallation.version);
+                setReadyStatusBarItem(checkovInstallation.actualVersion);
                 extensionReady = true;
                 if (vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor.document.fileName))
                     vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
             } catch(error) {
-                setErrorStatusBarItem(checkovInstallation?.version);
+                setErrorStatusBarItem(checkovInstallation?.actualVersion);
                 logger.error('Error occurred while preparing Checkov. Verify your settings, or try to reload vscode.', { error });
                 !shouldDisableErrorMessage() && showContactUsDetails(context.logUri, logFileName);
             }
@@ -78,7 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
             if (vscode.window.activeTextEditor) {
-                setReadyStatusBarItem(checkovInstallation?.version);
+                setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 applyDiagnostics(vscode.window.activeTextEditor.document, diagnostics, []);
             }
         }),
@@ -123,7 +127,7 @@ export function activate(context: vscode.ExtensionContext): void {
             if (!extensionReady) return;
             if ((vscode.window.activeTextEditor && saveEvent.uri.toString() !== vscode.window.activeTextEditor.document.uri.toString())
                 || !isSupportedFileType(saveEvent.fileName)) {
-                setReadyStatusBarItem(checkovInstallation?.version);
+                setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
@@ -132,7 +136,7 @@ export function activate(context: vscode.ExtensionContext): void {
             if (!extensionReady) return;
             if (changeViewEvent && !isSupportedFileType(changeViewEvent.document.fileName)) {
                 resetCancelTokenSource();
-                setReadyStatusBarItem(checkovInstallation?.version);
+                setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
@@ -151,7 +155,6 @@ export function activate(context: vscode.ExtensionContext): void {
         const useBcIds = getUseBcIds();
         const debugLogs = getUseDebugLogs();
         const noCertVerify = getNoCertVerify();
-        const checkovVersion = await getCheckovVersion(logger);
         const externalChecksDir = getExternalChecksDir();
         const skipFrameworks = getSkipFrameworks();
         const frameworks = getFrameworks();
@@ -172,14 +175,14 @@ export function activate(context: vscode.ExtensionContext): void {
                     logger.debug(`useCache is true, but did not find cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
                 }
             }
-            await runScan(vscode.window.activeTextEditor, certPath, useBcIds, debugLogs, noCertVerify, checkovRunCancelTokenSource.token, checkovVersion, externalChecksDir, fileUri, skipFrameworks, frameworks);
+            await runScan(vscode.window.activeTextEditor, certPath, useBcIds, debugLogs, noCertVerify, checkovRunCancelTokenSource.token, externalChecksDir, fileUri, skipFrameworks, frameworks);
         }
     };
 
-    const runScan = debounce(async (editor: vscode.TextEditor, certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, checkovVersion: string, externalChecksDir: string | undefined, fileUri?: vscode.Uri, skipFrameworks?: string[] | undefined, frameworks?: string[] | undefined): Promise<void> => {
+    const runScan = debounce(async (editor: vscode.TextEditor, certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, externalChecksDir: string | undefined, fileUri?: vscode.Uri, skipFrameworks?: string[] | undefined, frameworks?: string[] | undefined): Promise<void> => {
         logger.info('Starting to scan.');
         try {
-            setSyncingStatusBarItem(checkovInstallation?.version, 'Checkov scanning');
+            setSyncingStatusBarItem(checkovInstallation?.actualVersion, 'Checkov scanning');
             const filePath = fileUri ? fileUri.fsPath : editor.document.fileName;
             const configPath = getConfigFilePath(logger);
 
@@ -188,14 +191,14 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             }
 
-            const checkovResponse = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, certPath, useBcIds, debugLogs, noCertVerify, cancelToken, configPath, checkovVersion, externalChecksDir, skipFrameworks, frameworks);
+            const checkovResponse = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, certPath, useBcIds, debugLogs, noCertVerify, cancelToken, configPath, externalChecksDir, skipFrameworks, frameworks);
             handleScanResults(filePath, editor, context.workspaceState, checkovResponse.results.failedChecks, logger);
         } catch (error) {
             if (cancelToken.isCancellationRequested) {
                 return;
             }
 
-            setErrorStatusBarItem(checkovInstallation?.version);
+            setErrorStatusBarItem(checkovInstallation?.actualVersion);
             logger.error('Error occurred while running a checkov scan', { error });
             !shouldDisableErrorMessage() && showContactUsDetails(context.logUri, logFileName);
         }
@@ -204,7 +207,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const handleScanResults = (filename: string, editor: vscode.TextEditor, state: vscode.Memento, checkovFails: FailedCheckovCheck[], logger: Logger) => {
         saveCheckovResult(context.workspaceState, checkovFails);
         applyDiagnostics(editor.document, diagnostics, checkovFails);
-        (checkovFails.length > 0 ? setErrorStatusBarItem : setPassedStatusBarItem)(checkovInstallation?.version);
+        (checkovFails.length > 0 ? setErrorStatusBarItem : setPassedStatusBarItem)(checkovInstallation?.actualVersion);
         saveCachedResults(context, getFileHash(filename), editor.document.fileName, checkovFails, logger);
     };
 }
