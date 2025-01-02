@@ -106,13 +106,62 @@ const installOrUpdateCheckovWithPipenv = async (logger: Logger, installationDir:
     }
 };
 
+interface VersionCache {
+    version: string;
+    timestamp: number;
+}
+
+let versionCache: VersionCache | null = null;
+const VERSION_CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
+const resolveCheckovVersion = async (logger: Logger, requestedVersion: string): Promise<string> => {
+    // If a specific version is requested, use it
+    if (requestedVersion !== 'latest') {
+        return requestedVersion;
+    }
+
+    // Check cache first
+    const now = Date.now();
+    if (versionCache && (now - versionCache.timestamp) < VERSION_CACHE_TTL) {
+        logger.debug('Using cached Checkov version', { version: versionCache.version });
+        return versionCache.version;
+    }
+
+    try {
+        // Try to get the latest version
+        const [versionOutput] = await asyncExec('docker run --rm --interactive bridgecrew/checkov:latest -v');
+        const version = versionOutput.trim();
+        
+        // Cache the result
+        versionCache = { version, timestamp: now };
+        return version;
+    } catch (error) {
+        logger.warn('Failed to resolve latest Checkov version, falling back to latest tag', { error });
+        return 'latest';
+    }
+};
+
 const installOrUpdateCheckovWithDocker = async (logger: Logger, checkovVersion: string): Promise<string | null> => {
-    
     logger.info('Trying to install Checkov using Docker.');
     try {
-        const command = `docker pull bridgecrew/checkov:${checkovVersion}`;
+        // First try the specific version
+        const resolvedVersion = await resolveCheckovVersion(logger, checkovVersion);
+        const command = `docker pull bridgecrew/checkov:${resolvedVersion}`;
         logger.debug(`Testing docker installation with command: ${command}`);
-        await asyncExec(command);
+        
+        try {
+            await asyncExec(command);
+        } catch (error) {
+            // If specific version fails, fall back to latest
+            if (resolvedVersion !== 'latest') {
+                logger.warn(`Failed to pull Checkov version ${resolvedVersion}, falling back to latest`, { error });
+                await asyncExec('docker pull bridgecrew/checkov:latest');
+                // Clear cache since version resolution failed
+                versionCache = null;
+            } else {
+                throw error;
+            }
+        }
         
         const checkovPath = 'docker';
         logger.info('Checkov installed successfully using Docker.', { checkovPath });
@@ -149,4 +198,8 @@ export const installOrUpdateCheckov = async (logger: Logger, installationDir: st
     }
 
     throw new Error('Could not install Checkov.');
+};
+
+export const clearVersionCache = (): void => {
+    versionCache = null;
 };

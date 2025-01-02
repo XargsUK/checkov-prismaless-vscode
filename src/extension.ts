@@ -9,9 +9,12 @@ import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem,
 import { getCheckovVersion, shouldDisableErrorMessage, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
+import { clearVersionCache } from './checkov/checkovInstaller';
 
 export const CHECKOV_MAP = 'checkovMap';
 const logFileName = 'checkov.log';
+
+export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';
 
 // this method is called when extension is activated
 export function activate(context: vscode.ExtensionContext): void {
@@ -95,6 +98,13 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand(CLEAR_RESULTS_CACHE, async () => {
             clearCache(context, logger);
+        }),
+        vscode.commands.registerCommand(CLEAR_VERSION_CACHE, async () => {
+            clearVersionCache();
+            logger.info('Checkov version cache cleared');
+            vscode.window.showInformationMessage('Checkov version cache cleared');
+            // Re-run the installation to get a fresh version
+            vscode.commands.executeCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND);
         })
     );
 

@@ -6,3 +6,4 @@ export const INSTALL_OR_UPDATE_CHECKOV_COMMAND = 'checkov-prismaless.install-or-
 export const GET_INSTALLATION_DETAILS_COMMAND = 'checkov-prismaless.about-checkov';
 export const OPEN_CHECKOV_LOG = 'checkov-prismaless.open-log';
 export const CLEAR_RESULTS_CACHE = 'checkov-prismaless.clear-results-cache';
+export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';

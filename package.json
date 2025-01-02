@@ -56,6 +56,10 @@
       {
         "command": "checkov-prismaless.clear-results-cache",
         "title": "Clear Checkov results cache"
+      },
+      {
+        "command": "checkov-prismaless.clear-version-cache",
+        "title": "Clear Checkov version cache"
       }
     ],
     "configuration": {
