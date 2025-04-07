@@ -77,6 +77,12 @@
           "type": "boolean",
           "default": false
         },
+        "checkov-prismaless.clearCacheUponConfigUpdate": {
+          "title": "Clear cache upon config update",
+          "markdownDescription": "Clear the Checkov extension results cache when the Checkov configuration is updated. This ensures consistant results but will require Checkov to re-scan all files.",
+          "type": "boolean",
+          "default": true
+        },
         "checkov-prismaless.useDebugLogs": {
           "title": "Use debug logs",
           "markdownDescription": "Whether to print debug logs from Checkov for troubleshooting",
@@ -89,12 +95,12 @@
         },
         "checkov-prismaless.skipFrameworks": {
           "title": "Skip Frameworks",
-          "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces. See [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.  \nSetting this configuration property will overide any `skip-framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
+          "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces. See [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `skip-framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
           "type": "string"
         },
         "checkov-prismaless.frameworks": {
           "title": "Frameworks",
-          "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces.  \nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.  \nSetting this configuration property will overide any `framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
+          "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces.  \nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
           "type": "string"
         },
         "checkov-prismaless.skipChecks": {

@@ -6,7 +6,7 @@ import { applyDiagnostics } from './diagnostics';
 import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
 import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
-import { getCheckovVersion, shouldDisableErrorMessage, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks } from './configuration';
+import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
 import { clearVersionCache } from './checkov/checkovInstaller';
@@ -130,6 +130,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
+            if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml') && shouldClearCacheUponConfigUpdate())) {
+                vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
+            }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
         }),
         vscode.window.onDidChangeActiveTextEditor(changeViewEvent => {
@@ -140,6 +143,23 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+        }),
+        vscode.workspace.onDidChangeConfiguration(event => {
+            const cache_affected = [
+                'checkov-prismaless.skipFrameworks',
+                'checkov-prismaless.frameworks',
+                'checkov-prismaless.skipChecks'
+            ];
+            if (cache_affected.some(key => event.affectsConfiguration(key)) && shouldClearCacheUponConfigUpdate()) {
+                vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
+            }
+
+            const version_affected = [
+                'checkov-prismaless.checkovVersion',
+            ];
+            if (version_affected.some(key => event.affectsConfiguration(key)) && shouldClearCacheUponConfigUpdate()) {
+                vscode.commands.executeCommand(CLEAR_VERSION_CACHE);
+            }
         })
     );
 

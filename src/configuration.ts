@@ -102,6 +102,12 @@ export const shouldDisableErrorMessage = (): boolean => {
     return disableErrorMessageFlag;
 };
 
+export const shouldClearCacheUponConfigUpdate = (): boolean => {
+    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
+    const clearCacheUponConfigUpdateFlag = configuration.get<boolean>('clearCacheUponConfigUpdate', true);
+    return clearCacheUponConfigUpdateFlag;
+};
+
 export const getExternalChecksDir = (): string | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
     const externalChecksDir = configuration.get<string>('externalChecksDir');
