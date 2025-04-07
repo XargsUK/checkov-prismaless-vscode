@@ -14,7 +14,7 @@ const dockerMountDir = '/checkovScan';
 const configMountDir = '/checkovConfig';
 const caMountDir = '/checkovCert';
 const externalChecksMountDir = '/checkovExternalChecks';
-const skipChecks: string[] = ['BC_LIC*'];
+const skipChecksDefault: string[] = ['BC_LIC*'];
 
 const getDockerFileMountParams = (mountDir: string, filePath: string | undefined): string[] => {
     if (!filePath) {
@@ -61,7 +61,7 @@ const cleanupStdout = (stdout: string) => stdout.replace(/.\[0m/g,''); // Clean 
 
 export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInstallation, extensionVersion: string, fileName: string, 
     certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken, 
-    configPath: string | undefined, externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined): Promise<CheckovResponse> => {
+    configPath: string | undefined, externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined, skipChecks: string[] | undefined): Promise<CheckovResponse> => {
     return new Promise((resolve, reject) => {   
         const { checkovInstallationMethod, checkovPath } = checkovInstallation;
         const timestamp = Date.now();
@@ -77,7 +77,12 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
         const certificateParams: string[] = certPath && checkovInstallationMethod !== 'docker' ? ['-ca', `"${certPath}"`] : [];
         const bcIdParam: string[] = useBcIds ? ['--output-bc-ids'] : [];
         const noCertVerifyParam: string[] = noCertVerify ? ['--no-cert-verify'] : [];
-        const skipCheckParam: string[] = skipChecks.length ? ['--skip-check', skipChecks.join(',')] : [];
+        const skipCheckParam: string[] = skipChecks 
+            ? ['--skip-check', [...skipChecks, ...skipChecksDefault].join(',')] 
+            : (pipRunParams.length === 0 ? ['--skip-check', skipChecksDefault.join(',')] : []);
+        // If the user has set specific skip-check in the extension configuration, they will override the config file (checkov does not support both).
+        // If the user has not set skip-check in the extension configuration but has a checkov config file, the config file skip-check will be evaluated.
+        // If the user has not set neither specific skip checks nor config file, the skipChecksDefault will be applied to prevent breaking changes.
         const externalChecksParams: string[] = externalChecksDir && checkovInstallationMethod !== 'docker' ? ['--external-checks-dir', externalChecksDir] : [];
         const frameworkParams: string[] = frameworks ? ['--framework', frameworks.join(' ')] : [];
         const skipFrameworkParams: string[] = skipFrameworks ? ['--skip-framework', skipFrameworks.join(' ')] : [];
@@ -85,7 +90,7 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
         getGitRepoName(logger, vscode.window.activeTextEditor?.document.fileName).then((repoName) => {
             const repoIdParams = repoName ? ['--repo-id', repoName] : ['--repo-id', 'vscode/default'];
             const checkovArguments: string[] = [...dockerRunParams, ...certificateParams, ...bcIdParam, ...noCertVerifyParam, '-s',
-                ...repoIdParams, ...filePathParams, ...skipCheckParam, '-o', 'json', ...pipRunParams, ...externalChecksParams, ...frameworkParams, ...skipFrameworkParams];
+                ...repoIdParams, ...filePathParams, '-o', 'json', ...pipRunParams, ...externalChecksParams, ...frameworkParams, ...skipFrameworkParams, ...skipCheckParam];
             logger.info('Running checkov:');
             logger.info(`${checkovPath} ${checkovArguments.join(' ')}`);
 

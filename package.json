@@ -89,12 +89,17 @@
         },
         "checkov-prismaless.skipFrameworks": {
           "title": "Skip Frameworks",
-          "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless').\nAdd multiple frameworks using spaces.\nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.\nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.",
+          "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces. See [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.  \nSetting this configuration property will overide any `skip-framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
           "type": "string"
         },
         "checkov-prismaless.frameworks": {
           "title": "Frameworks",
-          "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless').\nAdd multiple frameworks using spaces.\nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.\nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.",
+          "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces.  \nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nYou may need to run the extension command 'Clear Checkov results cache' after modifying this setting.  \nSetting this configuration property will overide any `framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
+          "type": "string"
+        },
+        "checkov-prismaless.skipChecks": {
+          "title": "Skip Checks",
+          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks using comma separated values \nSetting this configuration property will overide any `skip-check` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file). ",
           "type": "string"
         }
       }
