@@ -148,9 +148,9 @@ export const getGitRepoName = async (logger: winston.Logger, filename: string | 
             if (line.startsWith('origin')) {
                 // remove the upstream name from the front and ' (fetch)' or ' (push)' from the back
                 const repoUrl = line.split('\t')[1].split(' ')[0];
-                logger.info('repo url' + repoUrl);
+                logger.info('repo url ' + repoUrl);
                 const repoName = parseRepoName(repoUrl);
-                logger.info('repo name' + repoName);
+                logger.info('repo name ' + repoName);
                 if (repoName) {
                     return repoName;
                 }
