@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 vscode.window.showWarningMessage('Still installing/updating Checkov, please wait a few seconds and try again.', 'Got it');
                 return;
             }
-            resetCancelTokenSource();
+            resetCancelTokenSource(); // Stop any previous scan
             await startScan(fileUri, true);
         }),
         vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
@@ -137,14 +137,20 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.window.onDidChangeActiveTextEditor(changeViewEvent => {
             if (!extensionReady) return;
-            if (changeViewEvent && !isSupportedFileType(changeViewEvent.document.fileName)) {
-                resetCancelTokenSource();
+            if (changeViewEvent && (!isSupportedFileType(changeViewEvent.document.fileName) || changeViewEvent.document.uri.toString().startsWith('output:'))) {
+                // Ignore files not supported
+                // Ignore output channels (e.g. output:exthost, output:ptyhost, etc.)
+                resetCancelTokenSource(); // Stop scan
                 setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
+            }
+            if (changeViewEvent && changeViewEvent.document.isUntitled) {
+                return; // Ignore untitled documents (e.g. untitled:Untitled-1, etc.), as Checkov requires a file saved to disk.
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
         }),
         vscode.workspace.onDidChangeConfiguration(event => {
+            if (!extensionReady) return;
             const cache_affected = [
                 'checkov-prismaless.skipFrameworks',
                 'checkov-prismaless.frameworks',
@@ -185,8 +191,14 @@ export function activate(context: vscode.ExtensionContext): void {
         if (vscode.window.activeTextEditor) {
             if (useCache) {
                 const fileToScan = fileUri?.fsPath || vscode.window.activeTextEditor.document.fileName;
-                const hash = getFileHash(fileToScan);
-                // fileUri will be non-null if we are scanning a temp (unsaved) file, so use the active editor filename for caching in this case
+                let hash: string;
+                try {
+                    hash = getFileHash(fileToScan);
+                } catch (error) {
+                    // getFileHash fails for unsaved files or output channels
+                    logger.error('Error occurred while generating file hash', { error });
+                    return;
+                }
                 const cachedResults = getCachedResults(context, hash, vscode.window.activeTextEditor.document.fileName, logger);
                 if (cachedResults) {
                     logger.debug(`Found cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
