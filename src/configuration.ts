@@ -36,6 +36,12 @@ export const getSkipFrameworks = (): string[] | undefined => {
     return skipFrameworks ? skipFrameworks.split(' ').map(entry => entry.trim()) : undefined;
 };
 
+export const getSkipChecks = (): string[] | undefined => {
+    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
+    const skipChecks = configuration.get<string>('skipChecks');
+    return skipChecks ? skipChecks.split(' ').map(entry => entry.trim()) : undefined;
+};
+
 export const getFrameworks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
     const frameworks = configuration.get<string>('frameworks');
