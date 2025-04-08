@@ -89,6 +89,12 @@
           "type": "number",
           "default": 2
         },
+        "checkov-prismaless.scanTimeout": {
+          "title": "Scan Timeout",
+          "markdownDescription": "The maximum time (in seconds) to wait for a Checkov scan to complete. If the scan exceeds this time, it will be terminated.",
+          "type": "number",
+          "default": 60
+        },
         "checkov-prismaless.useDebugLogs": {
           "title": "Use debug logs",
           "markdownDescription": "Whether to print debug logs from Checkov for troubleshooting",

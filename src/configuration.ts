@@ -113,9 +113,15 @@ export const getExternalChecksDir = (): string | undefined => {
     const externalChecksDir = configuration.get<string>('externalChecksDir');
     return externalChecksDir;
 };
+
 export const getMaximumConcurrentScans = (): number => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const maximumConcurrentScans = configuration.get<number>('maximumConcurrentScans', 1);
+    const maximumConcurrentScans = configuration.get<number>('maximumConcurrentScans', 2);
     return maximumConcurrentScans;
 };
 
+export const getScanTimeout = (): number => {
+    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
+    const scanTimeout = configuration.get<number>('scanTimeout', 60);
+    return scanTimeout;
+};

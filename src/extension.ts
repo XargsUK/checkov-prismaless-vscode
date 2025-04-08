@@ -6,7 +6,7 @@ import { applyDiagnostics } from './diagnostics';
 import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
 import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
-import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans } from './configuration';
+import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
 import { clearVersionCache } from './checkov/checkovInstaller';
@@ -169,6 +169,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const startScan = async (fileUri?: vscode.Uri, useCache = false): Promise<void> => {
         // If there are already maximumConcurrentScans active scans, cancel the oldest one
         const maximumConcurrentScans = getMaximumConcurrentScans();
+        const scanTimeout = getScanTimeout();
         if (activeScanTokens.length >= maximumConcurrentScans) {
             const oldToken = activeScanTokens.shift();
             oldToken?.cancel();
@@ -176,7 +177,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const tokenSource = new vscode.CancellationTokenSource();
         activeScanTokens.push(tokenSource);
         // Automatically cancel the scan after 60 seconds
-        setTimeout(() => tokenSource.cancel(), 60000);
+        setTimeout(() => tokenSource.cancel(), scanTimeout * 1000);
 
         const certPath = getPathToCert();
         const useBcIds = getUseBcIds();
