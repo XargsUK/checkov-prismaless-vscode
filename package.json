@@ -83,6 +83,12 @@
           "type": "boolean",
           "default": true
         },
+        "checkov-prismaless.maximumConcurrentScans": {
+          "title": "Maximum Concurrent Scans",
+          "markdownDescription": "The maximum number of files to scan concurrently. Increasing this value may improve performance but could also increase resource usage.",
+          "type": "number",
+          "default": 2
+        },
         "checkov-prismaless.useDebugLogs": {
           "title": "Use debug logs",
           "markdownDescription": "Whether to print debug logs from Checkov for troubleshooting",
