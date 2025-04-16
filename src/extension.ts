@@ -167,8 +167,8 @@ export function activate(context: vscode.ExtensionContext): void {
             }
             if (changeViewEvent && changeViewEvent.document.isUntitled) {
                 // Ignore untitled documents (e.g. untitled:Untitled-1, etc.), as Checkov requires a file saved to disk.
-                // Also cancel any ongoing scans
-                cancelAllActiveScans();
+                // Update the status bar to ready
+                setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
