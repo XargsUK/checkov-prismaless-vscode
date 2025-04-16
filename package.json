@@ -85,13 +85,13 @@
         },
         "checkov-prismaless.maximumConcurrentScans": {
           "title": "Maximum Concurrent Scans",
-          "markdownDescription": "The maximum number of files to scan concurrently. Increasing this value may improve performance but could also increase resource usage.",
+          "markdownDescription": "The maximum number of files to scan concurrently. Increasing this value may improve performance but could also increase resource usage. Default: 2",
           "type": "number",
           "default": 2
         },
         "checkov-prismaless.scanTimeout": {
           "title": "Scan Timeout",
-          "markdownDescription": "The maximum time (in seconds) to wait for a Checkov scan to complete. If the scan exceeds this time, it will be terminated.",
+          "markdownDescription": "The maximum time (in seconds) to wait for a Checkov scan to complete before automatically cancelling it. Default: 60",
           "type": "number",
           "default": 60
         },

@@ -4,6 +4,21 @@ All notable changes to the "checkov" extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
+## [1.0.117] - 2024-04-16
+
+### Added
+- Enhanced scan management system with:
+  - Document-specific scan tracking and cancellation
+  - Configurable limit for concurrent scans through new `maximumConcurrentScans` setting
+  - Automatic scan timeout with configurable duration via new `scanTimeout` setting
+  - Intelligent cleanup of completed scans to optimise resource usage
+- Improved cancellation logic when switching between files
+- Added detailed logging for scan lifecycle events
+
+### Changed
+- Reduced scan debounce time from 300ms to 100ms for more responsive scanning
+- Optimised resource handling for better performance on multi-file projects
+
 ## [1.0.106] - 2024-03-31
 
 ### Fixed
@@ -21,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Logo and icon for the extension in the marketplace to include alpha channel. 
+- Logo and icon for the extension in the marketplace to include alpha channel.
 - Help URL to point to the correct GitHub repository.
 - README.md updated for consistency, and added a section on why the fork was created.
 
