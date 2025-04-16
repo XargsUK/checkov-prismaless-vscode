@@ -29,16 +29,23 @@ type RunScanOptions = {
   skipChecks?: string[]
 };
 
+// Track active scan tokens with document URI for better management
+interface ActiveScan {
+    uri: string;
+    tokenSource: vscode.CancellationTokenSource;
+}
+
 // this method is called when extension is activated
 export function activate(context: vscode.ExtensionContext): void {
     const logger: Logger = getLogger(context.logUri.fsPath, logFileName);
     logger.info('Starting Checkov Extension.', { extensionVersion, vscodeVersion: vscode.version });
 
-    const activeScanTokens: vscode.CancellationTokenSource[] = [];
+    const activeScanTokens: ActiveScan[] = [];
     initializeStatusBarItem(OPEN_CONFIGURATION_COMMAND);
     let extensionReady = false;
     let checkovInstallation: CheckovInstallation | null = null;
     const checkovInstallationDir = vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath;
+    const MAX_CONCURRENT_SCANS = getMaximumConcurrentScans();
 
     // Set diagnostics collection
     const diagnostics = vscode.languages.createDiagnosticCollection('checkov-alerts');
@@ -153,10 +160,16 @@ export function activate(context: vscode.ExtensionContext): void {
             if (changeViewEvent && (!isSupportedFileType(changeViewEvent.document.fileName) || changeViewEvent.document.uri.toString().startsWith('output:'))) {
                 // Ignore unsupported files and output channels (e.g. output:exthost, output:ptyhost, etc.)
                 setReadyStatusBarItem(checkovInstallation?.actualVersion);
+
+                // Cancel all ongoing scans when switching to unsupported files
+                cancelAllActiveScans();
                 return;
             }
             if (changeViewEvent && changeViewEvent.document.isUntitled) {
-                return; // Ignore untitled documents (e.g. untitled:Untitled-1, etc.), as Checkov requires a file saved to disk.
+                // Ignore untitled documents (e.g. untitled:Untitled-1, etc.), as Checkov requires a file saved to disk.
+                // Also cancel any ongoing scans
+                cancelAllActiveScans();
+                return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
         }),
@@ -187,17 +200,72 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     const startScan = async (fileUri?: vscode.Uri, useCache = false): Promise<void> => {
-        // If there are already maximumConcurrentScans active scans, cancel the oldest one
-        const maximumConcurrentScans = getMaximumConcurrentScans();
-        const scanTimeout = getScanTimeout();
-        if (activeScanTokens.length >= maximumConcurrentScans) {
-            const oldToken = activeScanTokens.shift();
-            oldToken?.cancel();
-        }
+        // Remove diagnostics before starting a new scan
+        vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
+
+        // Check if file is supported
+        if (!fileUri && vscode.window.activeTextEditor && !isSupportedFileType(vscode.window.activeTextEditor?.document.fileName, true))
+            return;
+
+        if (!vscode.window.activeTextEditor) return;
+
+        const documentUri = fileUri?.toString() || vscode.window.activeTextEditor.document.uri.toString();
+
+        // Cancel any existing scan for this document
+        cancelScanForDocument(documentUri);
+
+        // Create a new cancellation token source
         const tokenSource = new vscode.CancellationTokenSource();
-        activeScanTokens.push(tokenSource);
-        // Automatically cancel the scan after 60 seconds
-        setTimeout(() => tokenSource.cancel(), scanTimeout * 1000);
+        const scanTimeout = getScanTimeout();
+
+        // Automatically cancel the scan after timeout
+        setTimeout(() => {
+            if (!tokenSource.token.isCancellationRequested) {
+                logger.debug(`Cancelling scan for ${documentUri} due to timeout (${scanTimeout}s)`);
+                tokenSource.cancel();
+            }
+        }, scanTimeout * 1000);
+
+        // Add to active scans tracking
+        activeScanTokens.push({
+            uri: documentUri,
+            tokenSource: tokenSource
+        });
+
+        // Enforce maximum concurrent scans limit
+        if (activeScanTokens.length > MAX_CONCURRENT_SCANS) {
+            // Find and cancel oldest scan(s) until we're within limits
+            while (activeScanTokens.length > MAX_CONCURRENT_SCANS) {
+                const oldestScan = activeScanTokens.shift();
+                if (oldestScan) {
+                    logger.info(`Canceling scan of ${oldestScan.uri} due to concurrent scan limit`);
+                    oldestScan.tokenSource.cancel();
+                    oldestScan.tokenSource.dispose(); // Dispose to prevent memory leaks
+                }
+            }
+        }
+
+        if (useCache) {
+            const fileToScan = fileUri?.fsPath ?? vscode.window.activeTextEditor.document.fileName;
+            let hash: string;
+            try {
+                hash = getFileHash(fileToScan);
+            } catch (error) {
+                // getFileHash fails for unsaved files or output channels
+                logger.error('Error occurred while generating file hash', { error });
+                removeScanToken(documentUri);
+                return;
+            }
+            const cachedResults = getCachedResults(context, hash, vscode.window.activeTextEditor.document.fileName, logger);
+            if (cachedResults) {
+                logger.debug(`Found cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
+                handleScanResults(fileToScan, vscode.window.activeTextEditor, context.workspaceState, cachedResults.results, logger);
+                removeScanToken(documentUri);
+                return;
+            } else {
+                logger.debug(`useCache is true, but did not find cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
+            }
+        }
 
         const certPath = getPathToCert();
         const useBcIds = getUseBcIds();
@@ -207,31 +275,73 @@ export function activate(context: vscode.ExtensionContext): void {
         const skipFrameworks = getSkipFrameworks();
         const skipChecks = getSkipChecks();
         const frameworks = getFrameworks();
-        vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
-        if (!fileUri && vscode.window.activeTextEditor && !isSupportedFileType(vscode.window.activeTextEditor?.document.fileName, true))
-            return;
-        if (vscode.window.activeTextEditor) {
-            if (useCache) {
-                const fileToScan = fileUri?.fsPath ?? vscode.window.activeTextEditor.document.fileName;
-                let hash: string;
-                try {
-                    hash = getFileHash(fileToScan);
-                } catch (error) {
-                    // getFileHash fails for unsaved files or output channels
-                    logger.error('Error occurred while generating file hash', { error });
-                    return;
-                }
-                const cachedResults = getCachedResults(context, hash, vscode.window.activeTextEditor.document.fileName, logger);
-                if (cachedResults) {
-                    logger.debug(`Found cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
-                    handleScanResults(fileToScan, vscode.window.activeTextEditor, context.workspaceState, cachedResults.results, logger);
-                    return;
-                } else {
-                    logger.debug(`useCache is true, but did not find cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${hash}`);
-                }
-            }
-            await runScan(vscode.window.activeTextEditor, { certPath, useBcIds, debugLogs, noCertVerify, cancelToken: checkovRunCancelTokenSource.token, externalChecksDir, fileUri, skipFrameworks, frameworks, skipChecks });
+
+        try {
+            await runScan(vscode.window.activeTextEditor, {
+                certPath,
+                useBcIds,
+                debugLogs,
+                noCertVerify,
+                cancelToken: tokenSource.token,
+                externalChecksDir,
+                fileUri,
+                skipFrameworks,
+                frameworks,
+                skipChecks
+            });
+        } finally {
+            // Always clean up the token when scan completes (success or failure)
+            removeScanToken(documentUri);
         }
+    };
+
+    /**
+     * Cancels an existing scan for a specific document URI
+     */
+    const cancelScanForDocument = (documentUri: string): void => {
+        const index = activeScanTokens.findIndex(item => item.uri === documentUri);
+        if (index !== -1) {
+            const scan = activeScanTokens[index];
+            logger.debug(`Canceling existing scan for ${documentUri}`);
+            scan.tokenSource.cancel();
+            scan.tokenSource.dispose(); // Dispose to prevent memory leaks
+            activeScanTokens.splice(index, 1); // Remove from tracking array
+        }
+    };
+
+    /**
+     * Removes a scan token from the active scans tracking
+     */
+    const removeScanToken = (documentUri: string): void => {
+        const index = activeScanTokens.findIndex(item => item.uri === documentUri);
+        if (index !== -1) {
+            const scan = activeScanTokens[index];
+            // Only dispose if it hasn't been canceled already
+            if (!scan.tokenSource.token.isCancellationRequested) {
+                scan.tokenSource.dispose();
+            }
+            activeScanTokens.splice(index, 1);
+        }
+    };
+
+    /**
+     * Cancels all active scans
+     */
+    const cancelAllActiveScans = (): void => {
+        logger.debug(`Canceling all ${activeScanTokens.length} active scans`);
+
+        // Create a copy of the array since we'll be modifying it during iteration
+        const scansToCancel = [...activeScanTokens];
+
+        // Cancel and dispose each scan
+        for (const scan of scansToCancel) {
+            logger.debug(`Canceling scan for ${scan.uri}`);
+            scan.tokenSource.cancel();
+            scan.tokenSource.dispose();
+        }
+
+        // Clear the array
+        activeScanTokens.length = 0;
     };
 
     const runScan = debounce(async (
