@@ -81,7 +81,9 @@ export function activate(context: vscode.ExtensionContext): void {
             } catch(error) {
                 setErrorStatusBarItem(checkovInstallation?.actualVersion);
                 logger.error('Error occurred while preparing Checkov. Verify your settings, or try to reload vscode.', { error });
-                !shouldDisableErrorMessage() && showContactUsDetails(context.logUri, logFileName);
+                if (!shouldDisableErrorMessage()) {
+                    showContactUsDetails(context.logUri, logFileName);
+                }
             }
         }),
         vscode.commands.registerCommand(RUN_FILE_SCAN_COMMAND, async (fileUri?: vscode.Uri): Promise<void> => {
@@ -254,7 +256,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
             setErrorStatusBarItem(checkovInstallation?.actualVersion);
             logger.error('Error occurred while running a checkov scan', { error });
-            !shouldDisableErrorMessage() && showContactUsDetails(context.logUri, logFileName);
+            if (!shouldDisableErrorMessage()) {
+                showContactUsDetails(context.logUri, logFileName);
+            }
         }
     }, 300, {});
 

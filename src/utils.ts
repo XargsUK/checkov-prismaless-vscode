@@ -45,7 +45,9 @@ export const isSupportedFileType = (fileName: string, showMessage = false): bool
     const isExtensionNotSupported = unsupportedExtensions.some(extension => fileName.endsWith(extension));
     const isFileNameNotSupported = unsupportedFileNames.some(name => fileName.match(name));
     if (isExtensionNotSupported || isFileNameNotSupported) {
-        showMessage && showUnsupportedFileMessage();
+        if (showMessage) {
+            showUnsupportedFileMessage();
+        }
         return false;
     }
     return true;
@@ -110,7 +112,7 @@ export const getWorkspacePath = (logger: winston.Logger): string | void => {
         } else {
             logger.warn('No folder open in workspace.');
         }
-    } 
+    }
     logger.warn('No workspace open.');
     return;
 };
@@ -139,7 +141,7 @@ export const getGitRepoName = async (logger: winston.Logger, filename: string | 
         logger.debug(`Output:\n${output[0]}`);
 
         const lines = output[0].split('\n');
-    
+
         let firstLine; // we'll save this and come back to it if we don't find 'origin'
         for (const line of lines) {
             if (!firstLine) {
@@ -234,10 +236,10 @@ export const saveCachedResults = (context: vscode.ExtensionContext, fileHash: st
         let fileCache = cache[filename];
         if (!fileCache) {
             logger.debug(`First cache entry for file ${filename}`);
-            fileCache = { oldest: 0, elements: [] }; 
+            fileCache = { oldest: 0, elements: [] };
             cache[filename] = fileCache;
-        } 
-        
+        }
+
         const entry: FileScanCacheEntry = { fileHash, filename, results };
         if (!fileCacheContainsEntry(entry, fileCache)) {
             addSavedScanForFile(entry, fileCache);

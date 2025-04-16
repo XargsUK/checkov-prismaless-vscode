@@ -9,7 +9,9 @@ const isPipCheckovInstalledGlobally = async () => {
     try {
         await asyncExec('checkov --version');
         return true;
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+        // We expect this error if checkov is not installed
         return false;
     }
 };
@@ -83,7 +85,7 @@ const getPipenvPythonExecutableLocation = async (logger: Logger, cwd: string): P
 };
 
 const installOrUpdateCheckovWithPipenv = async (logger: Logger, installationDir: string, checkovVersion: string): Promise<string | null> => {
-    
+
     logger.info('Trying to install Checkov using pipenv.');
 
     try {
@@ -142,10 +144,10 @@ const resolveCheckovVersion = async (logger: Logger, requestedVersion: string): 
         await asyncExec('docker pull bridgecrew/checkov:latest');
         const [versionOutput] = await asyncExec('docker run --rm --interactive bridgecrew/checkov:latest -v');
         const version = versionOutput.trim();
-        
+
         // Check if this specific version has a Docker tag
         const hasDockerTag = await checkVersionHasDockerTag(version, logger);
-        
+
         // If the version has a tag, use it; otherwise use latest
         const resolvedVersion = hasDockerTag ? version : 'latest';
         if (hasDockerTag) {
@@ -153,7 +155,7 @@ const resolveCheckovVersion = async (logger: Logger, requestedVersion: string): 
         } else {
             logger.info(`Version ${version} not available as tag, using latest`);
         }
-        
+
         // Cache both versions
         versionCache = { version, resolvedVersion, timestamp: now };
         return { version, resolvedVersion };
@@ -177,14 +179,14 @@ const installOrUpdateCheckovWithDocker = async (logger: Logger, checkovVersion: 
         const { version, resolvedVersion } = await resolveCheckovVersion(logger, checkovVersion);
         const command = `docker pull bridgecrew/checkov:${resolvedVersion}`;
         logger.debug(`Testing docker installation with command: ${command}`);
-        
+
         try {
             await asyncExec(command);
             const checkovPath = 'docker';
             logger.info('Checkov installed successfully using Docker.', { checkovPath, version: resolvedVersion });
-            const installation: CheckovInstallation = { 
-                checkovInstallationMethod: 'docker', 
-                checkovPath, 
+            const installation: CheckovInstallation = {
+                checkovInstallationMethod: 'docker',
+                checkovPath,
                 version: resolvedVersion,  // This is what will be used for Docker commands
                 actualVersion: version     // This is what will be shown in the UI
             };
@@ -197,9 +199,9 @@ const installOrUpdateCheckovWithDocker = async (logger: Logger, checkovVersion: 
                 // Clear cache since version resolution failed
                 versionCache = null;
                 // When falling back to latest, we still want to show the actual version in the UI
-                const fallbackInstallation: CheckovInstallation = { 
-                    checkovInstallationMethod: 'docker', 
-                    checkovPath: 'docker', 
+                const fallbackInstallation: CheckovInstallation = {
+                    checkovInstallationMethod: 'docker',
+                    checkovPath: 'docker',
                     version: 'latest',      // Use latest for Docker commands
                     actualVersion: version  // Show the actual version in UI
                 };

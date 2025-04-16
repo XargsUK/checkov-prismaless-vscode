@@ -129,7 +129,9 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
                         const results = JSON.parse(stdout);
                         logger.debug('Checkov task output:');
                         logger.debug(JSON.stringify(results, null, 2));
-                    } catch (err) {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    } catch (error) {
+                        // JSON parse error is expected in some cases, just log the raw output
                         logger.debug('Checkov task output:', { stdout });
                     }
 
