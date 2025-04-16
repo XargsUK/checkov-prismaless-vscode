@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 const checkovVersion = await getCheckovVersion(logger);
                 checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion);
                 logger.info('Checkov installation: ', checkovInstallation);
-                
+
                 // Only update version for non-Docker installations
                 if (checkovInstallation.checkovInstallationMethod !== 'docker') {
                     checkovInstallation.version = await runVersionCommand(logger, checkovInstallation.checkovPath, checkovVersion);
@@ -130,7 +130,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
-            if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml') && shouldClearCacheUponConfigUpdate())) {
+            if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml')) && shouldClearCacheUponConfigUpdate()) {
                 vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
