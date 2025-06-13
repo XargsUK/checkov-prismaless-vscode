@@ -54,7 +54,7 @@ const getDockerRunParams = (logger: Logger, workspaceRoot: string | undefined, f
 };
 
 const getpipRunParams = (configFilePath: string | undefined) => {
-    return configFilePath ? ['--config-file', configFilePath] : [];
+    return configFilePath ? ['--config-file', `"${configFilePath}"`] : [];
 };
 
 const cleanupStdout = (stdout: string) => stdout.replace(/.\[0m/g,''); // Clean docker run ANSI escape chars
