@@ -1,0 +1,32 @@
+[tools]
+node = "lts"
+
+[tasks]
+
+[tasks.vscode-prepublish]
+description = "Prepare extension for VS Code publishing"
+run = "npm run compile"
+
+[tasks.compile]
+description = "Compile TypeScript to JavaScript"
+run = "npx tsc -p ./"
+
+[tasks.watch]
+description = "Watch and compile TypeScript files"
+run = "npx tsc -watch -p ./"
+
+[tasks.pretest]
+description = "Prepare for testing (compile and lint)"
+run = "npm run compile && npm run lint"
+
+[tasks.lint]
+description = "Lint TypeScript source files"
+run = "npx eslint src --ext ts"
+
+[tasks.lint-fix]
+description = "Lint and auto-fix TypeScript source files"
+run = "npx eslint src --ext ts --fix"
+
+[tasks.test]
+description = "Run extension tests"
+run = "node ./out/test/runTest.js"
