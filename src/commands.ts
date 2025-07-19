@@ -7,3 +7,4 @@ export const GET_INSTALLATION_DETAILS_COMMAND = 'checkov-prismaless.about-checko
 export const OPEN_CHECKOV_LOG = 'checkov-prismaless.open-log';
 export const CLEAR_RESULTS_CACHE = 'checkov-prismaless.clear-results-cache';
 export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';
+export const REFRESH_SEVERITY_MAPPINGS = 'checkov-prismaless.refresh-severity-mappings';
