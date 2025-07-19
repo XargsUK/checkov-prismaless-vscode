@@ -9,6 +9,8 @@ import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as path from 'path';
 import { FileCache, ResultsCache } from './checkov/models';
+import { getSeverityProvider } from './severityProvider';
+
 
 const extensionData = vscode.extensions.getExtension('bridgecrew.checkov');
 export const extensionVersion = extensionData ? extensionData.packageJSON.version : 'unknown';
@@ -295,4 +297,72 @@ const findSavedScanForFile = (fileHash: string, filename: string, fileCache: Fil
 
 const fileCacheContainsEntry = (element: FileScanCacheEntry, fileCache: FileCache): boolean => {
     return findSavedScanForFile(element.fileHash, element.filename, fileCache) !== undefined;
+};
+
+/**
+ * Loads severity mappings using the GitHub-based severity provider
+ */
+export const loadSeverityMappings = (logger?: Logger): void => {
+    const provider = getSeverityProvider();
+
+    if (logger) {
+        logger.debug('Loading severity mappings using GitHub-based provider');
+    }
+
+    // Check if provider is initialized and has mappings
+    const stats = provider.getStatistics();
+    if (stats.totalMappings > 0) {
+        if (logger) {
+            logger.debug(`Severity provider initialized with ${stats.totalMappings} mappings (version: ${stats.version})`);
+            logger.debug(`Last updated: ${stats.lastUpdate}`);
+        }
+    } else {
+        if (logger) {
+            logger.warn('Severity provider not initialized or has no mappings');
+        }
+    }
+};
+
+/**
+ * Gets the severity for a given Checkov check ID using the GitHub-based severity provider
+ * @param checkId The Checkov check ID (e.g., "CKV_AWS_1")
+ * @returns The severity string or "UNKNOWN" if not found
+ */
+export const getSeverityForCheckId = (checkId: string, logger?: Logger): string => {
+    const provider = getSeverityProvider();
+    const severity = provider.getSeverity(checkId);
+    
+    if (severity) {
+        if (logger) {
+            logger.debug(`Severity lookup for ${checkId}: ${severity} (from GitHub provider)`);
+        }
+        return severity;
+    }
+    
+    if (logger) {
+        logger.debug(`Severity lookup for ${checkId}: not found, returning UNKNOWN (from GitHub provider)`);
+    }
+    
+    return 'UNKNOWN';
+};
+
+/**
+ * Maps Checkov severity strings to VS Code diagnostic severity levels
+ * @param severity The Checkov severity string
+ * @returns The corresponding VS Code DiagnosticSeverity
+ */
+export const mapSeverityToVSCode = (severity: string): vscode.DiagnosticSeverity => {
+    switch (severity.toUpperCase()) {
+        case 'CRITICAL':
+        case 'HIGH':
+            return vscode.DiagnosticSeverity.Error;
+        case 'MEDIUM':
+            return vscode.DiagnosticSeverity.Warning;
+        case 'LOW':
+        case 'INFO':
+            return vscode.DiagnosticSeverity.Information;
+        case 'UNKNOWN':
+        default:
+            return vscode.DiagnosticSeverity.Warning; // fallback for unknown severities
+    }
 };

@@ -35,31 +35,35 @@
     "commands": [
       {
         "command": "checkov-prismaless.scan-file",
-        "title": "Checkov Scan"
+        "title": "Checkov: Run Scan"
       },
       {
         "command": "checkov-prismaless.install-or-update-checkov",
-        "title": "Install or Update Checkov"
+        "title": "Checkov: Install or Update"
       },
       {
         "command": "checkov-prismaless.configuration.open",
-        "title": "Open Checkov Settings"
+        "title": "Checkov: Open Settings"
       },
       {
         "command": "checkov-prismaless.about-checkov",
-        "title": "About Checkov"
+        "title": "Checkov: About Checkov"
       },
       {
         "command": "checkov-prismaless.open-log",
-        "title": "Open Checkov Log"
+        "title": "Checkov: Open Log"
       },
       {
         "command": "checkov-prismaless.clear-results-cache",
-        "title": "Clear Checkov results cache"
+        "title": "Checkov: Clear results cache"
       },
       {
         "command": "checkov-prismaless.clear-version-cache",
-        "title": "Clear Checkov version cache"
+        "title": "Checkov: Clear version cache"
+      },
+      {
+        "command": "checkov-prismaless.refresh-severity-mappings",
+        "title": "Checkov: Refresh Severity Mappings"
       }
     ],
     "configuration": {
