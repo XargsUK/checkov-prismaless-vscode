@@ -1,6 +1,6 @@
 {
   "name": "checkov-prismaless",
-  "version": "1.0.120",
+  "version": "1.0.119",
   "displayName": "CheckovPrismaless",
   "publisher": "XargsUK",
   "description": "Find and fix misconfigurations in infrastructure-as-code manifests like Terraform, Kubernetes, Cloudformation, Serverless framework, Arm templates using Checkov - static analysis for infrastructure as code.",
@@ -14,7 +14,7 @@
     "url": "https://github.com/XargsUK/checkov-prismaless-vscode/issues"
   },
   "engines": {
-    "vscode": "^1.99.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Linters",
