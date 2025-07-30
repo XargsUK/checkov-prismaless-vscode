@@ -7,6 +7,7 @@ import { CheckovInstallation } from './checkovInstaller';
 import { convertToUnixPath, getGitRepoName, getDockerPathParams, normalizePath } from '../utils';
 import { CheckovResponse, CheckovResponseRaw } from './models';
 import { parseCheckovResponse } from './checkovParser';
+import { configHasSkipCheck } from '../parseCheckovConfig';
 
 const docker = new Docker();
 
@@ -14,7 +15,6 @@ const dockerMountDir = '/checkovScan';
 const configMountDir = '/checkovConfig';
 const caMountDir = '/checkovCert';
 const externalChecksMountDir = '/checkovExternalChecks';
-const skipChecksDefault: string[] = ['BC_LIC*'];
 
 const getDockerFileMountParams = (mountDir: string, filePath: string | undefined): string[] => {
     if (!filePath) {
@@ -78,9 +78,16 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
         const bcIdParam: string[] = useBcIds ? ['--output-bc-ids'] : [];
         const noCertVerifyParam: string[] = noCertVerify ? ['--no-cert-verify'] : [];
         let skipCheckParam: string[] = [];
-        if (typeof skipChecks === 'undefined') {
-            skipCheckParam = ['--skip-check', skipChecksDefault.join(',')];
+        // Three-tier hierarchy for skip-check handling:
+        // 1. If config file has skip-check, let it handle skip logic entirely
+        // 2. If no config file skip-check, use VS Code setting (defaults to BC_LIC*)
+        // 3. This allows config files to override VS Code settings completely
+        if (configHasSkipCheck(logger)) {
+            // Config file has skip-check defined, don't pass --skip-check parameter
+            // Let the config file handle skip logic entirely
+            skipCheckParam = [];
         } else if (Array.isArray(skipChecks) && skipChecks.length > 0) {
+            // Use VS Code setting (includes default BC_LIC* or user customization)
             skipCheckParam = ['--skip-check', skipChecks.join(',')];
         }
         const externalChecksParams: string[] = externalChecksDir && checkovInstallationMethod !== 'docker' ? ['--external-checks-dir', externalChecksDir] : [];
