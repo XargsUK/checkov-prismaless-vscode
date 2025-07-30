@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { Logger } from 'winston';
 import { getWorkspacePath } from './utils';
 
@@ -13,4 +13,20 @@ export const getConfigFilePath = (logger: Logger): string | undefined => {
         }
     }
     return undefined;
+};
+
+export const configHasSkipCheck = (logger: Logger): boolean => {
+    const configPath = getConfigFilePath(logger);
+    if (!configPath) {
+        return false;
+    }
+
+    try {
+        const configContent = readFileSync(configPath, 'utf8');
+        // Check for both skip-check and skip_check formats (YAML supports both)
+        return /^\s*skip[-_]check\s*:/m.test(configContent);
+    } catch (error) {
+        logger.warn(`Failed to read config file ${configPath}:`, error);
+        return false;
+    }
 };

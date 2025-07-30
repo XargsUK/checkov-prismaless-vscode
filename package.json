@@ -121,8 +121,9 @@
         },
         "checkov-prismaless.skipChecks": {
           "title": "Skip Checks",
-          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks using comma separated values \nSetting this configuration property will overide any `skip-check` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file). ",
-          "type": "string"
+          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks using comma separated values. Defaults to `BC_LIC*` to skip license compliance checks.  \n\n**Priority:** If your `.checkov.yaml` config file contains `skip-check`, it will take complete precedence over this VS Code setting. Otherwise, this setting will be used. To rely entirely on your config file, clear this field.",
+          "type": "string",
+          "default": "BC_LIC*"
         }
       }
     }
