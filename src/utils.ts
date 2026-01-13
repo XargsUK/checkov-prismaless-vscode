@@ -38,7 +38,7 @@ export const asyncExec = async (commandToExecute: string, options: ExecOptions =
     return new Promise((resolve, reject) => {
         exec(commandToExecute, { ...defaultOptions, ...options }, (err, stdout, stderr) => {
             if (err) { return reject(err); }
-            resolve([stdout, stderr]);
+            resolve([stdout.toString(), stderr.toString()]);
         });
     });
 };

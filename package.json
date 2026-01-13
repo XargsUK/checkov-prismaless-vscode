@@ -14,7 +14,7 @@
     "url": "https://github.com/XargsUK/checkov-prismaless-vscode/issues"
   },
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.108.0"
   },
   "categories": [
     "Linters",
@@ -138,17 +138,17 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/dockerode": "^3.3.42",
+    "@types/dockerode": "^4.0.0",
     "@types/lodash": "^4.17.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.15",
     "@types/semver": "^7.7.0",
-    "@types/vscode": "1.102.0",
+    "@types/vscode": "^1.108.1",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.31.0",
-    "glob": "^11.0.3",
+    "glob": "^11.1.0",
     "mocha": "^11.7.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.37.0"
