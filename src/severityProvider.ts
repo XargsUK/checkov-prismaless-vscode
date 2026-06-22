@@ -243,7 +243,7 @@ export class CheckovSeverityProvider {
                 this.logError(`Download attempt ${attempt} failed`, error);
                 
                 if (attempt === retries) {
-                    throw new Error(`Failed to download after ${retries} attempts: ${error}`);
+                    throw new Error(`Failed to download after ${retries} attempts: ${error}`, { cause: error });
                 }
 
                 // Exponential backoff
