@@ -16,6 +16,10 @@ const configMountDir = '/checkovConfig';
 const caMountDir = '/checkovCert';
 const externalChecksMountDir = '/checkovExternalChecks';
 
+// Checkov only reads the mounted files, so mount read-only. The 'z' option instructs Docker to
+// relabel the content as shared on SELinux-enforcing hosts (e.g. Fedora, OpenSUSE); it is a no-op elsewhere.
+const dockerMountOptions = 'ro,z';
+
 const getDockerFileMountParams = (mountDir: string, filePath: string | undefined): string[] => {
     if (!filePath) {
         return [];
@@ -23,7 +27,7 @@ const getDockerFileMountParams = (mountDir: string, filePath: string | undefined
 
     const [baseName, absPath] = normalizePath(filePath);
 
-    return ['-v', `"${absPath}:${mountDir}/${baseName}"`];
+    return ['-v', `"${absPath}:${mountDir}/${baseName}:${dockerMountOptions}"`];
 };
 
 const getPathParamsForDockerRun = (mountDir: string, filePath: string | undefined, flag: string): string[][] => {
@@ -48,7 +52,7 @@ const getDockerRunParams = (logger: Logger, workspaceRoot: string | undefined, f
     const [externalChecksDockerParams, externalChecksCheckovParams] = getPathParamsForDockerRun(externalChecksMountDir, externalChecksDir, '--external-checks-dir');
 
     const dockerParams = ['run', '--rm', '--interactive', nameParam, ...debugLogParams, '--env', 'BC_SOURCE=vscode', '--env', `BC_SOURCE_VERSION=${extensionVersion}`,
-        '-v', `"${mountRoot}:${dockerMountDir}"`, ...caCertDockerParams, ...configFileDockerParams, ...externalChecksDockerParams, '-w', dockerMountDir];
+        '-v', `"${mountRoot}:${dockerMountDir}:${dockerMountOptions}"`, ...caCertDockerParams, ...configFileDockerParams, ...externalChecksDockerParams, '-w', dockerMountDir];
 
     return [...dockerParams, image, ...configFileCheckovParams, ...caCertCheckovParams, ...externalChecksCheckovParams, '-f', filePathToScan];
 };
