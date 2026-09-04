@@ -40,7 +40,9 @@ The Checkov extension will invoke the latest version of ```Checkov```.
 * In most cases, the Details will include a fix option. This will either add, remove or replace an unwanted configuration, based on the Checkov fix dictionaries.
 * You can skip checks by adding an inline skip annotation ```checkov:skip=<check_id>:<suppression_comment>```.
 * You can skip checks for the whole workspace by adding a `.checkov.yaml` in your workspace folder (see [Checkov Configuration file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file)). You can also override certain configuration values by using the extension settings (`framework`, `skip-framework`, `skip-check`). By default, whenever you edit your checkov config file or override the values using the extension settings, the checkov cache will be cleared - this behaviour can be disabled.
+* You can exclude files from scanning entirely by adding a `.checkovignore` file to your workspace folder. It uses gitignore-style glob patterns, one per line (e.g. `*.md`, `docs/`, `examples/**/*.json`); blank lines and lines starting with `#` are ignored.
 * The extension will continue to scan file modifications and highlight errors in your editor upon every material resource modification.
+
 
 ### Troubleshooting logs
 

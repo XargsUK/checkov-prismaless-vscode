@@ -9,6 +9,7 @@ import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem,
 import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REFRESH_SEVERITY_MAPPINGS, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
+import { isFileIgnored, checkovIgnoreFileName } from './checkovIgnore';
 import { clearVersionCache } from './checkov/checkovInstaller';
 import { initializeSeverityProvider, getSeverityProvider } from './severityProvider';
 
@@ -174,7 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 setReadyStatusBarItem(checkovInstallation?.actualVersion);
                 return;
             }
-            if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml')) && shouldClearCacheUponConfigUpdate()) {
+            if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml') || saveEvent.fileName.endsWith(checkovIgnoreFileName)) && shouldClearCacheUponConfigUpdate()) {
                 vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
@@ -232,6 +233,13 @@ export function activate(context: vscode.ExtensionContext): void {
             return;
 
         if (!vscode.window.activeTextEditor) return;
+
+        const fileToScanPath = fileUri?.fsPath ?? vscode.window.activeTextEditor.document.fileName;
+        if (isFileIgnored(logger, fileToScanPath)) {
+            logger.info(`Skipping scan of ${fileToScanPath} because it matches a ${checkovIgnoreFileName} pattern`);
+            setReadyStatusBarItem(checkovInstallation?.actualVersion);
+            return;
+        }
 
         const documentUri = fileUri?.toString() || vscode.window.activeTextEditor.document.uri.toString();
 
