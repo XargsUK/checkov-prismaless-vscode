@@ -75,6 +75,19 @@ export const getCheckovVersion = async (logger: Logger): Promise<string> => {
     }
 };
 
+export type CheckovInstallationMethodSetting = 'auto' | 'docker' | 'pip3' | 'pipenv' | 'existing';
+const validInstallationMethods: CheckovInstallationMethodSetting[] = ['auto', 'docker', 'pip3', 'pipenv', 'existing'];
+
+export const getCheckovInstallationMethod = (logger: Logger): CheckovInstallationMethodSetting => {
+    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
+    const installationMethod = configuration.get<string>('installationMethod', 'auto').trim().toLowerCase();
+    if (validInstallationMethods.includes(installationMethod as CheckovInstallationMethodSetting)) {
+        return installationMethod as CheckovInstallationMethodSetting;
+    }
+    logger.warn(`Invalid installation method '${installationMethod}' - falling back to 'auto'`);
+    return 'auto';
+};
+
 export const verifyPythonVersion = async (logger: Logger, command = 'python3 --version'): Promise<void> => {
     logger.debug(`Getting python version with command: ${command}`);
     try {

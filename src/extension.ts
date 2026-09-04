@@ -6,7 +6,7 @@ import { applyDiagnostics } from './diagnostics';
 import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
 import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getFileHash, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
-import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout } from './configuration';
+import { getCheckovVersion, getCheckovInstallationMethod, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REFRESH_SEVERITY_MAPPINGS, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { getConfigFilePath } from './parseCheckovConfig';
 import { isFileIgnored, checkovIgnoreFileName } from './checkovIgnore';
@@ -63,7 +63,8 @@ export function activate(context: vscode.ExtensionContext): void {
                 extensionReady = false;
                 setSyncingStatusBarItem(checkovInstallation?.actualVersion, 'Updating Checkov');
                 const checkovVersion = await getCheckovVersion(logger);
-                checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion);
+                const installationMethod = getCheckovInstallationMethod(logger);
+                checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion, installationMethod);
                 logger.info('Checkov installation: ', checkovInstallation);
 
                 // Only update version for non-Docker installations
@@ -214,6 +215,10 @@ export function activate(context: vscode.ExtensionContext): void {
             ];
             if (version_affected.some(key => event.affectsConfiguration(key)) && shouldClearCacheUponConfigUpdate()) {
                 vscode.commands.executeCommand(CLEAR_VERSION_CACHE);
+            }
+
+            if (event.affectsConfiguration('checkov-prismaless.installationMethod')) {
+                vscode.commands.executeCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND);
             }
         })
     );

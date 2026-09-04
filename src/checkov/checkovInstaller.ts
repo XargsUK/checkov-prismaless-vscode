@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { Logger } from 'winston';
 import { asyncExec, isWindows } from '../utils';
-import { verifyPythonVersion } from '../configuration';
+import { verifyPythonVersion, CheckovInstallationMethodSetting } from '../configuration';
 
 const isPipCheckovInstalledGlobally = async () => {
     try {
@@ -215,7 +215,46 @@ const installOrUpdateCheckovWithDocker = async (logger: Logger, checkovVersion: 
     }
 };
 
-export const installOrUpdateCheckov = async (logger: Logger, installationDir: string, checkovVersion: string): Promise<CheckovInstallation> => {
+const useExistingCheckovInstallation = async (logger: Logger): Promise<CheckovInstallation | null> => {
+    if (await isPipCheckovInstalledGlobally()) {
+        logger.info('Using the existing checkov executable found on the PATH; it will not be installed or updated.');
+        // it could be installed manually via pip, brew, or something else. this return value will make it just use the `checkov` command.
+        return { checkovInstallationMethod: 'pip3', checkovPath: 'checkov' };
+    }
+    return null;
+};
+
+export const installOrUpdateCheckov = async (logger: Logger, installationDir: string, checkovVersion: string, installationMethod: CheckovInstallationMethodSetting = 'auto'): Promise<CheckovInstallation> => {
+    if (installationMethod !== 'auto') {
+        logger.info(`Using the configured installation method: ${installationMethod}`);
+
+        switch (installationMethod) {
+            case 'docker': {
+                const dockerCheckovInstallation = await installOrUpdateCheckovWithDocker(logger, checkovVersion);
+                if (dockerCheckovInstallation) return dockerCheckovInstallation;
+                break;
+            }
+            case 'pip3': {
+                const pip3CheckovPath = await installOrUpdateCheckovWithPip3(logger, checkovVersion);
+                if (pip3CheckovPath) return { checkovInstallationMethod: 'pip3', checkovPath: pip3CheckovPath };
+                break;
+            }
+            case 'pipenv': {
+                const pipenvCheckovPath = await installOrUpdateCheckovWithPipenv(logger, installationDir, checkovVersion);
+                if (pipenvCheckovPath) return { checkovInstallationMethod: 'pipenv', checkovPath: pipenvCheckovPath };
+                break;
+            }
+            case 'existing': {
+                const existingInstallation = await useExistingCheckovInstallation(logger);
+                if (existingInstallation) return existingInstallation;
+                logger.error('Could not find an existing `checkov` executable on the PATH');
+                break;
+            }
+        }
+
+        throw new Error(`Could not install Checkov using the configured installation method (${installationMethod}). Change the 'Installation Method' setting or fix the underlying issue (see the log for details).`);
+    }
+
     const dockerCheckovInstallation = await installOrUpdateCheckovWithDocker(logger, checkovVersion);
     if (dockerCheckovInstallation) return dockerCheckovInstallation;
     const pip3CheckovPath = await installOrUpdateCheckovWithPip3(logger, checkovVersion);
@@ -225,13 +264,12 @@ export const installOrUpdateCheckov = async (logger: Logger, installationDir: st
 
     logger.warn('All installation / update methods failed; attempting to fall back to a global checkov installation');
 
-    if (await isPipCheckovInstalledGlobally()) {
+    const existingInstallation = await useExistingCheckovInstallation(logger);
+    if (existingInstallation) {
         logger.warn('Checkov appears to be installed globally, so it will be used. However, it may be an outdated version.');
-        // it could be installed manually via pip, brew, or something else. this return value will make it just use the `checkov` command.
-        return { checkovInstallationMethod: 'pip3' , checkovPath: 'checkov' };
-    } else {
-        logger.error('Could not find a global `checkov` executable either');
+        return existingInstallation;
     }
+    logger.error('Could not find a global `checkov` executable either');
 
     throw new Error('Could not install Checkov.');
 };

@@ -43,6 +43,18 @@ The Checkov extension will invoke the latest version of ```Checkov```.
 * You can exclude files from scanning entirely by adding a `.checkovignore` file to your workspace folder. It uses gitignore-style glob patterns, one per line (e.g. `*.md`, `docs/`, `examples/**/*.json`); blank lines and lines starting with `#` are ignored.
 * The extension will continue to scan file modifications and highlight errors in your editor upon every material resource modification.
 
+### Choosing how Checkov is installed
+
+By default the extension automatically picks the first working installation method (Docker, then pip3, then pipenv, then any existing `checkov` executable). You can override this with the `checkov-prismaless.installationMethod` setting:
+
+* `auto` (default) - automatically pick the first working method.
+* `docker` - run Checkov via the `bridgecrew/checkov` Docker image.
+* `pip3` - install/update Checkov with pip3 and run it directly.
+* `pipenv` - install/update Checkov in a pipenv environment managed by the extension.
+* `existing` - use the `checkov` executable already on your PATH without installing or updating it.
+
+After changing this setting, run the `Checkov: Install or Update` command (or reload the window) for it to take effect.
+
 
 ### Troubleshooting logs
 
