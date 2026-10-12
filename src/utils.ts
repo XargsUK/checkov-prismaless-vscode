@@ -1,18 +1,19 @@
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import { exec, ExecOptions } from 'child_process';
+import { exec, execFile, ExecOptions } from 'child_process';
 import winston, { Logger } from 'winston';
-import { FailedCheckovCheck } from './checkov';
+import { CheckovInstallation, FailedCheckovCheck } from './checkov';
 import { DiagnosticReferenceCode } from './diagnostics';
 import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
+import * as os from 'os';
 import * as path from 'path';
 import { FileCache, ResultsCache } from './checkov/models';
 import { getSeverityProvider } from './severityProvider';
 
 
-const extensionData = vscode.extensions.getExtension('bridgecrew.checkov');
+const extensionData = vscode.extensions.getExtension('XargsUK.checkov-prismaless');
 export const extensionVersion = extensionData ? extensionData.packageJSON.version : 'unknown';
 
 export const isWindows = process.platform === 'win32';
@@ -33,13 +34,27 @@ export type FileScanCacheEntry = {
 };
 
 type ExecOutput = [stdout: string, stderr: string];
-export const asyncExec = async (commandToExecute: string, options: ExecOptions = {}): Promise<ExecOutput> => {
-    const defaultOptions: ExecOptions = { maxBuffer: 1024 * 1000 };
+const shellSafeToken = /^[\w.:/=~-]+$/;
+
+// Runs a command without a shell so arguments are never interpreted.
+// On Windows, tools such as pip are often .cmd or .bat shims that only run through cmd.exe,
+// so a command made up entirely of plain tokens is still passed to it.
+// Windows looks for a bare command name in the working directory before the PATH,
+// so commands run from the temp directory unless a caller needs somewhere else.
+export const asyncExecFile = async (file: string, args: string[] = [], options: ExecOptions & { input?: string } = {}): Promise<ExecOutput> => {
+    const { input, ...rest } = options;
+    const execOptions: ExecOptions = { maxBuffer: 1024 * 1000, cwd: os.tmpdir(), ...rest };
     return new Promise((resolve, reject) => {
-        exec(commandToExecute, { ...defaultOptions, ...options }, (err, stdout, stderr) => {
+        const callback = (err: Error | null, stdout: string | Buffer, stderr: string | Buffer) => {
             if (err) { return reject(err); }
             resolve([stdout.toString(), stderr.toString()]);
-        });
+        };
+        const child = isWindows && [file, ...args].every(token => shellSafeToken.test(token))
+            ? exec([file, ...args].join(' '), execOptions, callback)
+            : execFile(file, args, execOptions, callback);
+        if (input !== undefined) {
+            child.stdin?.end(input);
+        }
     });
 };
 
@@ -95,34 +110,11 @@ export const getLogger = (logFileDir: string, logFileName: string): winston.Logg
     ]
 });
 
-export const convertToUnixPath = (path: string): string => {
-    const isExtendedLengthPath = /^\\\\\?\\/.test(path);
-    // eslint-disable-next-line no-control-regex
-    const hasNonAscii = /[^\u0000-\u0080]+/.test(path);
-
-    if (isExtendedLengthPath || hasNonAscii) {
-        return `"${path}"`;
-    }
-
-    return `"${path.replace(/\\/g, '/')}"`;
-};
-
-export const getWorkspacePath = (logger: winston.Logger): string | void => {
-    if(vscode.workspace) {
-        if(vscode.workspace.workspaceFolders) {
-            return vscode.workspace.workspaceFolders[0].uri.fsPath;
-        } else {
-            logger.warn('No folder open in workspace.');
-        }
-    }
-    logger.warn('No workspace open.');
-    return;
-};
-
-export const runVersionCommand = async (logger: winston.Logger, checkovPath: string, checkovVersion: string | undefined): Promise<string> => {
-    const command = checkovPath === 'docker' ? `docker run --rm --interactive bridgecrew/checkov:${checkovVersion} -v` : `${checkovPath} -v`;
-    logger.debug(`Version command: ${command}`);
-    const resp = await asyncExec(command);
+export const runVersionCommand = async (logger: winston.Logger, installation: Pick<CheckovInstallation, 'checkovPath' | 'checkovArgs'>, checkovVersion: string | undefined): Promise<string> => {
+    const { checkovPath, checkovArgs = [] } = installation;
+    const args = checkovPath === 'docker' ? ['run', '--rm', '--interactive', `bridgecrew/checkov:${checkovVersion}`, '-v'] : [...checkovArgs, '-v'];
+    logger.debug(`Version command: ${checkovPath} ${args.join(' ')}`);
+    const resp = await asyncExecFile(checkovPath, args);
     logger.debug(`Response from version command: ${resp[0]}`);
     return resp[0].trim();
 };
@@ -132,9 +124,8 @@ export const getGitRepoName = async (logger: winston.Logger, filename: string | 
         logger.debug('Filename was empty when getting git repo; returning default');
         return null;
     }
-    const cwd = path.dirname(filename);
     try {
-        const output = await asyncExec('git remote -v', { cwd });
+        const output = await asyncExecFile('git', ['-C', path.dirname(filename), 'remote', '-v']);
 
         if (output[1]) {
             logger.info(`Got stderr output when getting git repo; returning null. Output: ${output[1]}`);
@@ -177,14 +168,6 @@ export const getGitRepoName = async (logger: winston.Logger, filename: string | 
     return null;
 };
 
-export const getDockerPathParams = (workspaceRoot: string | undefined, filePath: string): [string | null, string] => {
-    if (!workspaceRoot) {
-        return [null, filePath];
-    }
-    const relative = path.relative(workspaceRoot, filePath);
-    return relative.length > 0 && !relative.startsWith('../') && !relative.startsWith('..\\') && !path.isAbsolute(relative) ? [workspaceRoot, relative] : [null, filePath];
-};
-
 const parseRepoName = (repoUrl: string): string | null => {
     if (repoUrl.endsWith('/')) {
         repoUrl = repoUrl.substring(0, repoUrl.length - 1);
@@ -210,17 +193,24 @@ const parseRepoName = (repoUrl: string): string | null => {
     return repoName.split('/').some(s => s === '') ? null : repoName;
 };
 
-export const normalizePath = (filePath: string): string[] => {
-    const absPath = path.resolve(filePath);
-    return [path.basename(absPath), absPath];
-};
-
 export const getFileHash = (filename: string): string => {
     const fileBuffer = fs.readFileSync(filename);
     const hashSum = crypto.createHash('md5');
     hashSum.update(fileBuffer);
     return hashSum.digest('hex');
 };
+
+const getFileHashOrUnreadable = (filename: string): string => {
+    try {
+        return getFileHash(filename);
+    } catch {
+        return 'unreadable';
+    }
+};
+
+// Results depend on the config files as well as the scanned file, so all of them feed the cache key.
+export const getScanCacheKey = (filename: string, configPaths: string[]): string =>
+    [getFileHash(filename), ...configPaths.map(getFileHashOrUnreadable)].join(':');
 
 export const getCachedResults = (context: vscode.ExtensionContext, fileHash: string, filename: string, logger: Logger): FileScanCacheEntry | undefined => {
     logger.debug(`Getting cached results for hash ${fileHash}`);

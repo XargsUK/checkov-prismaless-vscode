@@ -42,6 +42,10 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Lint
         run: npm run lint
+      - name: Unit tests
+        run: |
+          npm run compile
+          npm run test:unit
       - name: Package
         run: npx vsce package --allow-star-activation --out extension.vsix
       - name: Publish to Marketplace

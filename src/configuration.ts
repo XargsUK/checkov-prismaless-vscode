@@ -1,16 +1,18 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import * as semver from 'semver';
-import { isWindows, asyncExec } from './utils';
+import { isWindows, asyncExecFile } from './utils';
+import { DockerSelinuxMode, resolveExternalChecksDir } from './checkov/scanCommand';
 
 const minCheckovVersion = '2.0.0';
 const minPythonVersion = '3.7.0';
 
-export const getPathToCert = (): string | undefined => {
-    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const pathToCert = configuration.get<string>('certificate');
-    return pathToCert;
-};
+// These settings are not declared in package.json, so VS Code cannot restrict their scope.
+// Reading the user value only stops a workspace from setting them.
+const getUserSetting = <T>(key: string): T | undefined =>
+    vscode.workspace.getConfiguration('checkov-prismaless').inspect<T>(key)?.globalValue;
+
+export const getPathToCert = (): string | undefined => getUserSetting<string>('certificate');
 
 export const getUseBcIds = (): boolean | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
@@ -24,11 +26,7 @@ export const getUseDebugLogs = (): boolean | undefined => {
     return useDebugLogs;
 };
 
-export const getNoCertVerify = (): boolean | undefined => {
-    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const noCertVerify = configuration.get<boolean>('noCertVerify', false);
-    return noCertVerify;
-};
+export const getNoCertVerify = (): boolean | undefined => getUserSetting<boolean>('noCertVerify') ?? false;
 
 export const getSkipFrameworks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
@@ -39,7 +37,7 @@ export const getSkipFrameworks = (): string[] | undefined => {
 export const getSkipChecks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
     const skipChecks = configuration.get<string>('skipChecks');
-    return skipChecks ? skipChecks.split(' ').map(entry => entry.trim()) : undefined;
+    return skipChecks ? skipChecks.split(/[\s,]+/).filter(entry => entry.length > 0) : undefined;
 };
 
 export const getFrameworks = (): string[] | undefined => {
@@ -75,10 +73,10 @@ export const getCheckovVersion = async (logger: Logger): Promise<string> => {
     }
 };
 
-export const verifyPythonVersion = async (logger: Logger, command = 'python3 --version'): Promise<void> => {
-    logger.debug(`Getting python version with command: ${command}`);
+export const verifyPythonVersion = async (logger: Logger, pythonExe = 'python3', args: string[] = ['--version']): Promise<void> => {
+    logger.debug(`Getting python version with command: ${pythonExe} ${args.join(' ')}`);
     try {
-        const [pythonVersionResponse] = await asyncExec(command);
+        const [pythonVersionResponse] = await asyncExecFile(pythonExe, args);
         logger.debug('Raw output:');
         logger.debug(pythonVersionResponse);
         const pythonVersion = pythonVersionResponse.split(' ')[1];
@@ -87,9 +85,9 @@ export const verifyPythonVersion = async (logger: Logger, command = 'python3 --v
             throw Error(`Invalid python version: ${pythonVersion} (must be >=${minPythonVersion})`);
         }
     } catch (error) {
-        if (isWindows && command === 'python3 --version') {
+        if (isWindows && pythonExe === 'python3') {
             logger.debug('python3 executable not found on Windows, falling back to python');
-            await verifyPythonVersion(logger, 'python --version');
+            await verifyPythonVersion(logger, 'python');
         } else {
             throw error;
         }
@@ -108,10 +106,26 @@ export const shouldClearCacheUponConfigUpdate = (): boolean => {
     return clearCacheUponConfigUpdateFlag;
 };
 
-export const getExternalChecksDir = (): string | undefined => {
+export const getExternalChecksDir = (resource: vscode.Uri): string | undefined => {
+    const setting = vscode.workspace.getConfiguration('checkov-prismaless', resource).inspect<string>('externalChecksDir');
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(resource)?.uri.fsPath;
+    return resolveExternalChecksDir(setting?.globalValue, setting?.workspaceFolderValue ?? setting?.workspaceValue, workspaceFolder);
+};
+
+export const getSkipPaths = (resource: vscode.Uri): string[] => {
+    const skipPaths = vscode.workspace.getConfiguration('checkov-prismaless', resource).get<unknown>('skipPaths');
+    return Array.isArray(skipPaths) ? skipPaths.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0) : [];
+};
+
+export const getMinimumSeverity = (): string => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const externalChecksDir = configuration.get<string>('externalChecksDir');
-    return externalChecksDir;
+    return configuration.get<string>('minimumSeverity', 'none');
+};
+
+export const getDockerSelinuxMode = (): DockerSelinuxMode => {
+    const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
+    const mode = configuration.get<string>('dockerSelinux', 'off');
+    return mode === 'relabel' || mode === 'disable' ? mode : 'off';
 };
 
 export const getMaximumConcurrentScans = (): number => {

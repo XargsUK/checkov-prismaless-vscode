@@ -2,14 +2,17 @@ import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import { FailedCheckovCheck } from './checkov';
 import { getSeverityForCheckId, mapSeverityToVSCode } from './utils';
+import { meetsMinimumSeverity } from './severityFilter';
 
 export interface DiagnosticReferenceCode {
     target: vscode.Uri;
     value: string;
 }
 
-export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[], logger?: Logger): void => {
+// Returns the number of findings hidden by the minimum severity filter.
+export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[], logger?: Logger, minimumSeverity = 'none'): number => {
     const foundDiagnostics: vscode.Diagnostic[] = [];
+    let hidden = 0;
 
     for (const failure of failedCheckovChecks) {
         const line = document.lineAt(failure.fileLineRange[0] > 0 ? failure.fileLineRange[0] - 1 : 0); // checkov results are 1-based; these lines are 0-based
@@ -31,6 +34,11 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
             logger.debug(`Processing ${failure.checkId}: original severity=${failure.severity}, mapped severity=${severityString}`);
         }
 
+        if (!meetsMinimumSeverity(severityString, minimumSeverity)) {
+            hidden++;
+            continue;
+        }
+
         // Map severity to VS Code diagnostic severity
         const vsSeverity = mapSeverityToVSCode(severityString);
 
@@ -48,4 +56,5 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
     }
 
     diagnostics.set(document.uri ,foundDiagnostics);
+    return hidden;
 };

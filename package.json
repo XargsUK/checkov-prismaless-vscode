@@ -1,6 +1,6 @@
 {
   "name": "checkov-prismaless",
-  "version": "1.0.122",
+  "version": "1.1.0",
   "displayName": "CheckovPrismaless",
   "publisher": "XargsUK",
   "description": "Find and fix misconfigurations in infrastructure-as-code manifests like Terraform, Kubernetes, Cloudformation, Serverless framework, Arm templates using Checkov - static analysis for infrastructure as code.",
@@ -31,6 +31,16 @@
     "*"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Checkov runs against workspace files and reads its configuration from the workspace, so scanning is only available in trusted workspaces."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Checkov needs the files to be available on disk."
+    }
+  },
   "contributes": {
     "commands": [
       {
@@ -106,8 +116,9 @@
         },
         "checkov-prismaless.externalChecksDir": {
           "title": "External Checks Directory",
-          "markdownDescription": "Path to external checks to be added",
-          "type": "string"
+          "markdownDescription": "Path to external checks to be added. Checkov loads and runs Python from this directory. A workspace can only set a path inside the workspace folder (relative paths are resolved against it); any other location has to be set in user settings.",
+          "type": "string",
+          "scope": "resource"
         },
         "checkov-prismaless.skipFrameworks": {
           "title": "Skip Frameworks",
@@ -121,9 +132,50 @@
         },
         "checkov-prismaless.skipChecks": {
           "title": "Skip Checks",
-          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks using comma separated values. Defaults to `BC_LIC*` to skip license compliance checks.  \n\n**Priority:** If your `.checkov.yaml` config file contains `skip-check`, it will take complete precedence over this VS Code setting. Otherwise, this setting will be used. To rely entirely on your config file, clear this field.",
+          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks separated by commas or spaces. Defaults to `BC_LIC*` to skip license compliance checks.  \n\n**Priority:** If your `.checkov.yaml` config file contains `skip-check`, it will take complete precedence over this VS Code setting. Otherwise, this setting will be used. To rely entirely on your config file, clear this field.",
           "type": "string",
           "default": "BC_LIC*"
+        },
+        "checkov-prismaless.skipPaths": {
+          "title": "Skip Paths",
+          "markdownDescription": "Glob patterns for files that should not be scanned, relative to the workspace folder (e.g., `**/*.md`). A skipped file is marked as skipped in the status bar.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource"
+        },
+        "checkov-prismaless.minimumSeverity": {
+          "title": "Minimum Severity",
+          "markdownDescription": "Only show findings at or above this severity. Findings with an unknown severity are always shown. The status bar shows when findings are hidden.",
+          "type": "string",
+          "enum": [
+            "none",
+            "INFO",
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "default": "none"
+        },
+        "checkov-prismaless.dockerSelinux": {
+          "title": "Docker SELinux handling",
+          "markdownDescription": "How to give the Checkov container access to your files on hosts that enforce SELinux. Only needed if scans fail with permission errors when using Docker.",
+          "type": "string",
+          "enum": [
+            "off",
+            "relabel",
+            "disable"
+          ],
+          "markdownEnumDescriptions": [
+            "Mount files without any SELinux option.",
+            "Mount the workspace folder with the `z` option. Docker relabels it on the host so containers can read it. The change is recursive and stays after the scan. Files outside the workspace folder are not relabelled, so scanning them needs `disable` instead.",
+            "Run the container with `--security-opt label=disable`. Files on the host are left alone and SELinux separation is turned off for the Checkov container only."
+          ],
+          "default": "off",
+          "scope": "machine"
         }
       }
     }
@@ -135,11 +187,11 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "lint:fix": "eslint src --ext ts --fix",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "mocha --ui tdd \"out/test/unit/**/*.test.js\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/dockerode": "^4.0.1",
     "@types/lodash": "^4.17.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.0.0",
@@ -156,7 +208,6 @@
     "typescript-eslint": "^8.61.1"
   },
   "dependencies": {
-    "dockerode": "^5.0.0",
     "lodash": "^4.17.21",
     "semver": "^7.7.2",
     "winston": "^3.17.0"
