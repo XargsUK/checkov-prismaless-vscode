@@ -3,6 +3,7 @@ import { meetsMinimumSeverity } from '../../severityFilter';
 
 suite('meetsMinimumSeverity', () => {
     test('shows everything when no minimum is set', () => {
+        assert.ok(meetsMinimumSeverity('INFO', 'None'));
         assert.ok(meetsMinimumSeverity('INFO', 'none'));
         assert.ok(meetsMinimumSeverity('LOW', ''));
     });
@@ -16,6 +17,8 @@ suite('meetsMinimumSeverity', () => {
     test('shows findings at or above the minimum', () => {
         assert.ok(meetsMinimumSeverity('MEDIUM', 'MEDIUM'));
         assert.ok(meetsMinimumSeverity('CRITICAL', 'HIGH'));
+        assert.ok(meetsMinimumSeverity('HIGH', 'Medium'));
+        assert.ok(!meetsMinimumSeverity('LOW', 'Medium'));
         assert.ok(meetsMinimumSeverity('high', 'medium'));
     });
 

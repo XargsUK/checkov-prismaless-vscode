@@ -433,6 +433,7 @@ export function activate(context: vscode.ExtensionContext): void {
         saveCheckovResult(context.workspaceState, checkovFails);
         const minimumSeverity = getMinimumSeverity();
         const hidden = applyDiagnostics(editor.document, diagnostics, checkovFails, logger, minimumSeverity);
+        logger.debug(`Showing ${checkovFails.length - hidden} of ${checkovFails.length} findings (minimum severity: ${minimumSeverity})`);
         const hiddenMessage = hidden > 0 ? `${hidden} finding${hidden === 1 ? '' : 's'} below ${minimumSeverity} hidden by checkov-prismaless.minimumSeverity` : undefined;
         if (checkovFails.length > hidden) {
             setErrorStatusBarItem(checkovInstallation?.actualVersion, hiddenMessage);

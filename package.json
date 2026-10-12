@@ -151,14 +151,14 @@
           "markdownDescription": "Only show findings at or above this severity. Findings with an unknown severity are always shown. The status bar shows when findings are hidden.",
           "type": "string",
           "enum": [
-            "none",
-            "INFO",
-            "LOW",
-            "MEDIUM",
-            "HIGH",
-            "CRITICAL"
+            "None",
+            "Info",
+            "Low",
+            "Medium",
+            "High",
+            "Critical"
           ],
-          "default": "none"
+          "default": "None"
         },
         "checkov-prismaless.dockerSelinux": {
           "title": "Docker SELinux handling",

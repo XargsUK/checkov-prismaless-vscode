@@ -28,22 +28,26 @@ export const getUseDebugLogs = (): boolean | undefined => {
 
 export const getNoCertVerify = (): boolean | undefined => getUserSetting<boolean>('noCertVerify') ?? false;
 
+// These settings are declared as strings, but settings.json can hold anything, so a list is accepted as well.
+const toList = (value: unknown): string[] | undefined => {
+    const entries: unknown[] = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/[\s,]+/) : [];
+    const list = entries.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0).map(entry => entry.trim());
+    return list.length > 0 ? list : undefined;
+};
+
 export const getSkipFrameworks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const skipFrameworks = configuration.get<string>('skipFrameworks');
-    return skipFrameworks ? skipFrameworks.split(' ').map(entry => entry.trim()) : undefined;
+    return toList(configuration.get<unknown>('skipFrameworks'));
 };
 
 export const getSkipChecks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const skipChecks = configuration.get<string>('skipChecks');
-    return skipChecks ? skipChecks.split(/[\s,]+/).filter(entry => entry.length > 0) : undefined;
+    return toList(configuration.get<unknown>('skipChecks'));
 };
 
 export const getFrameworks = (): string[] | undefined => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    const frameworks = configuration.get<string>('frameworks');
-    return frameworks ? frameworks.split(' ').map(entry => entry.trim()) : undefined;
+    return toList(configuration.get<unknown>('frameworks'));
 };
 
 export const getCheckovVersion = async (logger: Logger): Promise<string> => {
@@ -119,7 +123,7 @@ export const getSkipPaths = (resource: vscode.Uri): string[] => {
 
 export const getMinimumSeverity = (): string => {
     const configuration: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('checkov-prismaless');
-    return configuration.get<string>('minimumSeverity', 'none');
+    return configuration.get<string>('minimumSeverity', 'None');
 };
 
 export const getDockerSelinuxMode = (): DockerSelinuxMode => {

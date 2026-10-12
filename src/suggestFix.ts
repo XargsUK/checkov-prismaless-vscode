@@ -1,15 +1,19 @@
 import * as vscode from 'vscode';
 import { FailedCheckovCheck } from './checkov';
 import { OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND } from './commands';
-import { DiagnosticReferenceCode } from './diagnostics';
+import { DiagnosticReferenceCode, diagnosticSource } from './diagnostics';
 import { CHECKOV_MAP } from './extension';
 import { createDiagnosticKey } from './utils';
 
 const provideFixCodeActions = (workspaceState: vscode.Memento) => (document: vscode.TextDocument, range: vscode.Range | vscode.Selection, context: vscode.CodeActionContext): vscode.CodeAction[] => {
     // for each diagnostic entry that has the matching `code`, create a code action command
     const checkovMap = workspaceState.get<Record<string, FailedCheckovCheck>>(CHECKOV_MAP) || {};
+    // The provider is called for every diagnostic in range, including those from other extensions
     return context.diagnostics
-        .map(diagnostic => createCommandCodeAction(document, diagnostic, checkovMap[createDiagnosticKey(diagnostic)]))
+        .filter(diagnostic => diagnostic.source === diagnosticSource)
+        .map(diagnostic => ({ diagnostic, checkovCheck: checkovMap[createDiagnosticKey(diagnostic)] }))
+        .filter(({ checkovCheck }) => checkovCheck !== undefined)
+        .map(({ diagnostic, checkovCheck }) => createCommandCodeAction(document, diagnostic, checkovCheck))
         .reduce((prev, current) => [...prev, ...current], []);
 };
 

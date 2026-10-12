@@ -4,13 +4,15 @@ import { FailedCheckovCheck } from './checkov';
 import { getSeverityForCheckId, mapSeverityToVSCode } from './utils';
 import { meetsMinimumSeverity } from './severityFilter';
 
+export const diagnosticSource = 'Checkov ';
+
 export interface DiagnosticReferenceCode {
     target: vscode.Uri;
     value: string;
 }
 
 // Returns the number of findings hidden by the minimum severity filter.
-export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[], logger?: Logger, minimumSeverity = 'none'): number => {
+export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[], logger?: Logger, minimumSeverity = 'None'): number => {
     const foundDiagnostics: vscode.Diagnostic[] = [];
     let hidden = 0;
 
@@ -50,7 +52,7 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
             message,
             range: new vscode.Range(startPos, line.range.end),
             severity: vsSeverity,
-            source: 'Checkov ',
+            source: diagnosticSource,
             code
         });
     }
