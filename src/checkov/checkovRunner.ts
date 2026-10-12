@@ -1,115 +1,68 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
-import * as path from 'path';
+import * as os from 'os';
 import { Logger } from 'winston';
-import Docker from 'dockerode';
 import { CheckovInstallation } from './checkovInstaller';
-import { convertToUnixPath, getGitRepoName, getDockerPathParams, normalizePath } from '../utils';
+import { asyncExecFile, getGitRepoName, isWindows } from '../utils';
 import { CheckovResponse, CheckovResponseRaw } from './models';
 import { parseCheckovResponse } from './checkovParser';
 import { configHasSkipCheck } from '../parseCheckovConfig';
-
-const docker = new Docker();
-
-const dockerMountDir = '/checkovScan';
-const configMountDir = '/checkovConfig';
-const caMountDir = '/checkovCert';
-const externalChecksMountDir = '/checkovExternalChecks';
-
-const getDockerFileMountParams = (mountDir: string, filePath: string | undefined): string[] => {
-    if (!filePath) {
-        return [];
-    }
-
-    const [baseName, absPath] = normalizePath(filePath);
-
-    return ['-v', `"${absPath}:${mountDir}/${baseName}"`];
-};
-
-const getPathParamsForDockerRun = (mountDir: string, filePath: string | undefined, flag: string): string[][] => {
-    const dockerParams = getDockerFileMountParams(mountDir, filePath);
-    const checkovParams = filePath ? [flag, `"${mountDir}/${path.basename(filePath)}"`] : [];
-
-    return [dockerParams, checkovParams];
-};
-
-const getDockerRunParams = (logger: Logger, workspaceRoot: string | undefined, filePath: string, extensionVersion: string, configFilePath: string | undefined, checkovVersion: string, externalChecksDir: string |undefined, certPath: string | undefined, debugLogs: boolean | undefined, uniqueName: string) => {
-    const image = `bridgecrew/checkov:${checkovVersion}`;
-    const pathParams = getDockerPathParams(workspaceRoot, filePath);
-    // if filepath is within the workspace, then the mount root will be the workspace path, and the file path will be the relative file path from there.
-    // otherwise, we will mount into the file's directory, and the file path is just the filename.
-    const mountRoot = pathParams[0] || path.dirname(pathParams[1]);
-    const filePathToScan = convertToUnixPath(pathParams[0] ? pathParams[1] : path.basename(filePath));
-    const debugLogParams = debugLogs ? ['--env', 'LOG_LEVEL=DEBUG'] : [];
-    const nameParam = `--name ${uniqueName}`;
-
-    const [caCertDockerParams, caCertCheckovParams] = getPathParamsForDockerRun(caMountDir, certPath, '--ca-certificate');
-    const [configFileDockerParams, configFileCheckovParams] = getPathParamsForDockerRun(configMountDir, configFilePath, '--config-file');
-    const [externalChecksDockerParams, externalChecksCheckovParams] = getPathParamsForDockerRun(externalChecksMountDir, externalChecksDir, '--external-checks-dir');
-
-    const dockerParams = ['run', '--rm', '--interactive', nameParam, ...debugLogParams, '--env', 'BC_SOURCE=vscode', '--env', `BC_SOURCE_VERSION=${extensionVersion}`,
-        '-v', `"${mountRoot}:${dockerMountDir}"`, ...caCertDockerParams, ...configFileDockerParams, ...externalChecksDockerParams, '-w', dockerMountDir];
-
-    return [...dockerParams, image, ...configFileCheckovParams, ...caCertCheckovParams, ...externalChecksCheckovParams, '-f', filePathToScan];
-};
-
-const getpipRunParams = (configFilePath: string | undefined) => {
-    return configFilePath ? ['--config-file', `"${configFilePath}"`] : [];
-};
+import { buildScanCommand, DockerSelinuxMode } from './scanCommand';
 
 const cleanupStdout = (stdout: string) => stdout.replace(/.\[0m/g,''); // Clean docker run ANSI escape chars
 
 export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInstallation, extensionVersion: string, fileName: string,
     certPath: string | undefined, useBcIds: boolean | undefined, debugLogs: boolean | undefined, noCertVerify: boolean | undefined, cancelToken: vscode.CancellationToken,
-    configPath: string | undefined, externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined, skipChecks: string[] | undefined): Promise<CheckovResponse> => {
+    configPaths: string[], externalChecksDir: string | undefined, skipFrameworks: string[] | undefined, frameworks: string[] | undefined, skipChecks: string[] | undefined,
+    selinuxMode: DockerSelinuxMode | undefined): Promise<CheckovResponse> => {
     return new Promise((resolve, reject) => {
-        const { checkovInstallationMethod, checkovPath } = checkovInstallation;
+        const { checkovInstallationMethod, checkovPath, checkovArgs } = checkovInstallation;
         const timestamp = Date.now();
         const uniqueRunName = `vscode-checkov-${timestamp}`;
 
-        // Get the version once and ensure it has a value
-        const version = checkovInstallation.version || 'latest';
-
-        // Pass the resolved version to getDockerRunParams
-        const dockerRunParams = checkovInstallationMethod === 'docker' ? getDockerRunParams(logger, vscode.workspace.rootPath, fileName, extensionVersion, configPath, version, externalChecksDir, certPath, debugLogs, uniqueRunName) : [];
-        const pipRunParams =  ['pipenv', 'pip3'].includes(checkovInstallationMethod) ? getpipRunParams(configPath) : [];
-        const filePathParams = checkovInstallationMethod === 'docker' ? [] : ['-f', `"${fileName}"`];
-        const certificateParams: string[] = certPath && checkovInstallationMethod !== 'docker' ? ['-ca', `"${certPath}"`] : [];
-        const bcIdParam: string[] = useBcIds ? ['--output-bc-ids'] : [];
-        const noCertVerifyParam: string[] = noCertVerify ? ['--no-cert-verify'] : [];
-        let skipCheckParam: string[] = [];
         // Three-tier hierarchy for skip-check handling:
         // 1. If config file has skip-check, let it handle skip logic entirely
         // 2. If no config file skip-check, use VS Code setting (defaults to BC_LIC*)
         // 3. This allows config files to override VS Code settings completely
-        if (configHasSkipCheck(logger)) {
-            // Config file has skip-check defined, don't pass --skip-check parameter
-            // Let the config file handle skip logic entirely
-            skipCheckParam = [];
-        } else if (Array.isArray(skipChecks) && skipChecks.length > 0) {
-            // Use VS Code setting (includes default BC_LIC* or user customization)
-            skipCheckParam = ['--skip-check', skipChecks.join(',')];
-        }
-        const externalChecksParams: string[] = externalChecksDir && checkovInstallationMethod !== 'docker' ? ['--external-checks-dir', externalChecksDir] : [];
-        const frameworkParams: string[] = frameworks ? ['--framework', frameworks.join(' ')] : [];
-        const skipFrameworkParams: string[] = skipFrameworks ? ['--skip-framework', skipFrameworks.join(' ')] : [];
-        const workingDir = vscode.workspace.rootPath;
+        const skipChecksToPass = configHasSkipCheck(configPaths, logger) ? [] : skipChecks;
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fileName))?.uri.fsPath;
+        // A local Checkov resolves its config and relative paths from the workspace folder.
+        // Docker needs no working directory, and nothing should be looked up next to a file outside the workspace.
+        const workingDir = checkovInstallationMethod !== 'docker' && workspaceFolder ? workspaceFolder : os.tmpdir();
         getGitRepoName(logger, vscode.window.activeTextEditor?.document.fileName).then((repoName) => {
-            const repoIdParams = repoName ? ['--repo-id', repoName] : ['--repo-id', 'vscode/default'];
-            const checkovArguments: string[] = [...dockerRunParams, ...certificateParams, ...bcIdParam, ...noCertVerifyParam, '-s',
-                ...repoIdParams, ...filePathParams, '-o', 'json', ...pipRunParams, ...externalChecksParams, ...frameworkParams, ...skipFrameworkParams, ...skipCheckParam];
+            const { command, args } = buildScanCommand({
+                installationMethod: checkovInstallationMethod,
+                checkovPath,
+                checkovArgs,
+                dockerImageTag: checkovInstallation.version || 'latest',
+                containerName: uniqueRunName,
+                extensionVersion,
+                workspaceRoot: workspaceFolder,
+                filePath: fileName,
+                repoId: repoName,
+                configFilePath: configPaths[0],
+                certPath,
+                externalChecksDir,
+                useBcIds,
+                noCertVerify,
+                debugLogs,
+                frameworks,
+                skipFrameworks,
+                skipChecks: skipChecksToPass,
+                selinuxMode
+            });
             logger.info('Running checkov:');
-            logger.info(`${checkovPath} ${checkovArguments.join(' ')}`);
+            logger.info(`${command} ${args.join(' ')}`);
 
             const debugLogEnv = debugLogs ? { LOG_LEVEL: 'DEBUG' } : {};
-            const ckv = spawn(checkovPath, checkovArguments,
+            const ckv = spawn(command, args,
                 {
-                    shell: true,
                     env: { ...process.env, BC_SOURCE: 'vscode', BC_SOURCE_VERSION: extensionVersion, ...debugLogEnv },
-                    ...(workingDir ? { cwd: workingDir } : {})
+                    cwd: workingDir
                 });
 
             let stdout = '';
+            let finished = false;
 
             ckv.stdout.on('data', data => {
                 if (data.toString().startsWith('{') || data.toString().startsWith('[') || stdout) {
@@ -128,6 +81,7 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
             });
 
             ckv.on('close', code => {
+                finished = true;
                 try {
                     if (cancelToken.isCancellationRequested) return reject('Cancel invoked');
                     logger.debug(`Checkov scan process exited with code ${code}`);
@@ -159,16 +113,18 @@ export const runCheckovScan = (logger: Logger, checkovInstallation: CheckovInsta
             });
 
             cancelToken.onCancellationRequested(async (cancelEvent) => {
+                if (finished) return;
                 logger.info('Cancellation token invoked, aborting checkov run.', { cancelEvent });
                 if (checkovInstallationMethod === 'docker') {
-                    const container = docker.getContainer(uniqueRunName);
-                    await container.kill().catch(err => {
-                        if (err.reason === 'no such container') {
+                    await asyncExecFile('docker', ['kill', uniqueRunName]).catch(err => {
+                        if (/no such container/i.test(String(err))) {
                             logger.info(`not deleting container ${uniqueRunName} as it was already removed`);
                         } else {
                             logger.warn(`failed to delete container ${uniqueRunName}: ${err}`);
                         }
                     });
+                } else if (isWindows) {
+                    ckv.kill();
                 } else {
                     ckv.kill('SIGABRT');
                 }
