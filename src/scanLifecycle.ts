@@ -2,18 +2,7 @@ import type { Memento } from 'vscode';
 import { Logger } from 'winston';
 import { FailedCheckovCheck } from './checkov/models';
 import { getCachedResults, saveCachedResults } from './scanCache';
-
-export interface Clock {
-    setTimeout(callback: () => void, ms: number): unknown;
-    clearTimeout(handle: unknown): void;
-    now(): number;
-}
-
-export const systemClock: Clock = {
-    setTimeout: (callback, ms) => setTimeout(callback, ms),
-    clearTimeout: handle => clearTimeout(handle as NodeJS.Timeout),
-    now: () => Date.now()
-};
+import { Clock, systemClock } from './clock';
 
 export type CheckovInvocation<TOptions> = (filePath: string, options: TOptions, signal: AbortSignal) => Promise<FailedCheckovCheck[]>;
 

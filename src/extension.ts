@@ -10,7 +10,7 @@ import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDAT
 import { findConfigFiles } from './parseCheckovConfig';
 import { clearVersionCache } from './checkov/checkovInstaller';
 import { DockerSelinuxMode } from './checkov/scanCommand';
-import { initializeSeverityProvider, getSeverityProvider } from './severityProvider';
+import { createSeverityMappings, githubMappingSource } from './severity';
 import { createScanLifecycle, ScanOutcome } from './scanLifecycle';
 import { clearCache } from './scanCache';
 
@@ -43,11 +43,28 @@ export function activate(context: vscode.ExtensionContext): void {
     const logger: Logger = getLogger(context.logUri.fsPath, logFileName);
     logger.info('Starting Checkov Extension.', { extensionVersion, vscodeVersion: vscode.version });
 
-    // Initialize severity provider on startup
-    initializeSeverityProvider(context, logger);
+    let extensionReady = false;
+
+    const rescanActiveDocument = (): void => {
+        if (extensionReady && vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor.document.fileName)) {
+            vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+        }
+    };
+
+    const severityMappings = createSeverityMappings({
+        source: githubMappingSource(logger),
+        cache: context.globalState,
+        logger,
+        onMappingsChanged: change => {
+            rescanActiveDocument();
+            if (change === 'updated') {
+                vscode.window.showInformationMessage('Checkov severity mappings updated');
+            }
+        }
+    });
+    context.subscriptions.push(severityMappings);
 
     initializeStatusBarItem(OPEN_CONFIGURATION_COMMAND);
-    let extensionReady = false;
     let checkovInstallation: CheckovInstallation | null = null;
     const checkovInstallationDir = vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath;
 
@@ -129,7 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
             if (vscode.window.activeTextEditor) {
                 setReadyStatusBarItem();
-                applyDiagnostics(vscode.window.activeTextEditor.document, diagnostics, [], logger);
+                applyDiagnostics(vscode.window.activeTextEditor.document, diagnostics, [], severityMappings, logger);
             }
         }),
         vscode.commands.registerCommand(OPEN_CONFIGURATION_COMMAND, () => {
@@ -165,17 +182,11 @@ export function activate(context: vscode.ExtensionContext): void {
             try {
                 logger.info('Manually refreshing severity mappings from GitHub');
                 vscode.window.showInformationMessage('Refreshing severity mappings...');
-
-                const provider = getSeverityProvider();
-                if (provider) {
-                    await provider.forceRefresh(); // Force update
-                    logger.info('Severity mappings refreshed successfully');
-                    vscode.window.showInformationMessage('Severity mappings refreshed successfully');
-                } else {
-                    logger.warn('Severity provider not initialized, initializing now');
-                    await initializeSeverityProvider(context, logger);
-                    vscode.window.showInformationMessage('Severity provider initialized and mappings loaded');
+                const result = await severityMappings.refresh();
+                if (result === 'updated') {
+                    rescanActiveDocument();
                 }
+                vscode.window.showInformationMessage(result === 'updated' ? 'Checkov severity mappings updated' : 'Checkov severity mappings are already up to date');
             } catch (error) {
                 logger.error('Failed to refresh severity mappings', { error });
                 vscode.window.showErrorMessage('Failed to refresh severity mappings. Check logs for details.');
@@ -246,9 +257,8 @@ export function activate(context: vscode.ExtensionContext): void {
                 'checkov-prismaless.minimumSeverity',
                 'checkov-prismaless.skipPaths'
             ];
-            if (display_affected.some(key => event.affectsConfiguration(key))
-                && vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor.document.fileName)) {
-                vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+            if (display_affected.some(key => event.affectsConfiguration(key))) {
+                rescanActiveDocument();
             }
         })
     );
@@ -364,7 +374,7 @@ export function activate(context: vscode.ExtensionContext): void {
             saveCheckovResult(context.workspaceState, findings);
         }
         const minimumSeverity = getMinimumSeverity();
-        const hidden = applyDiagnostics(document, diagnostics, findings, logger, minimumSeverity);
+        const hidden = applyDiagnostics(document, diagnostics, findings, severityMappings, logger, minimumSeverity);
         logger.debug(`Showing ${findings.length - hidden} of ${findings.length} findings (minimum severity: ${minimumSeverity})`);
         if (!active) return;
 

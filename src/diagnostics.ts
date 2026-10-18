@@ -1,10 +1,15 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import { FailedCheckovCheck } from './checkov';
-import { getSeverityForCheckId, mapSeverityToVSCode } from './utils';
-import { meetsMinimumSeverity, resolveSeverity } from './severityFilter';
+import { DisplayLevel, displayLevel, meetsMinimumSeverity, SeverityMappings } from './severity';
 
 export const diagnosticSource = 'Checkov ';
+
+const diagnosticSeverities: Record<DisplayLevel, vscode.DiagnosticSeverity> = {
+    error: vscode.DiagnosticSeverity.Error,
+    warning: vscode.DiagnosticSeverity.Warning,
+    information: vscode.DiagnosticSeverity.Information
+};
 
 export interface DiagnosticReferenceCode {
     target: vscode.Uri;
@@ -12,7 +17,8 @@ export interface DiagnosticReferenceCode {
 }
 
 // Returns the number of findings hidden by the minimum severity filter.
-export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[], logger?: Logger, minimumSeverity = 'None'): number => {
+export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vscode.DiagnosticCollection, failedCheckovChecks: FailedCheckovCheck[],
+    severityMappings: Pick<SeverityMappings, 'resolve'>, logger?: Logger, minimumSeverity = 'None'): number => {
     const foundDiagnostics: vscode.Diagnostic[] = [];
     let hidden = 0;
 
@@ -26,7 +32,7 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
                     value: failure.checkId
                 } : `${failure.checkId}${failure.guideline ? `: ${failure.guideline}` : ''}`;
 
-        const severityString = resolveSeverity(getSeverityForCheckId(failure.checkId, logger), failure.severity);
+        const severityString = severityMappings.resolve(failure.checkId, failure.severity);
 
         if (logger) {
             logger.debug(`Processing ${failure.checkId}: original severity=${failure.severity}, mapped severity=${severityString}`);
@@ -37,9 +43,6 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
             continue;
         }
 
-        // Map severity to VS Code diagnostic severity
-        const vsSeverity = mapSeverityToVSCode(severityString);
-
         // Create message with severity prefix
         const severityPrefix = `[${severityString.toUpperCase()}] `;
         const message = `${severityPrefix}${failure.checkName}`;
@@ -47,7 +50,7 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
         foundDiagnostics.push({
             message,
             range: new vscode.Range(startPos, line.range.end),
-            severity: vsSeverity,
+            severity: diagnosticSeverities[displayLevel(severityString)],
             source: diagnosticSource,
             code
         });

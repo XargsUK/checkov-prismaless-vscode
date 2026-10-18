@@ -2,14 +2,13 @@ import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { exec, execFile, ExecOptions } from 'child_process';
-import winston, { Logger } from 'winston';
+import winston from 'winston';
 import { CheckovInstallation, FailedCheckovCheck } from './checkov';
 import { DiagnosticReferenceCode } from './diagnostics';
 import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as os from 'os';
 import * as path from 'path';
-import { getSeverityProvider } from './severityProvider';
 
 
 const extensionData = vscode.extensions.getExtension('XargsUK.checkov-prismaless');
@@ -200,71 +199,3 @@ const getFileHashOrUnreadable = (filename: string): string => {
 // Results depend on the config files as well as the scanned file, so all of them feed the cache key.
 export const getScanCacheKey = (filename: string, configPaths: string[]): string =>
     [getFileHash(filename), ...configPaths.map(getFileHashOrUnreadable)].join(':');
-
-/**
- * Loads severity mappings using the GitHub-based severity provider
- */
-export const loadSeverityMappings = (logger?: Logger): void => {
-    const provider = getSeverityProvider();
-
-    if (logger) {
-        logger.debug('Loading severity mappings using GitHub-based provider');
-    }
-
-    // Check if provider is initialized and has mappings
-    const stats = provider.getStatistics();
-    if (stats.totalMappings > 0) {
-        if (logger) {
-            logger.debug(`Severity provider initialized with ${stats.totalMappings} mappings (version: ${stats.version})`);
-            logger.debug(`Last updated: ${stats.lastUpdate}`);
-        }
-    } else {
-        if (logger) {
-            logger.warn('Severity provider not initialized or has no mappings');
-        }
-    }
-};
-
-/**
- * Gets the severity for a given Checkov check ID using the GitHub-based severity provider
- * @param checkId The Checkov check ID (e.g., "CKV_AWS_1")
- * @returns The severity string, or undefined if the check is not in the mappings
- */
-export const getSeverityForCheckId = (checkId: string, logger?: Logger): string | undefined => {
-    const provider = getSeverityProvider();
-    const severity = provider.getSeverity(checkId);
-    
-    if (severity) {
-        if (logger) {
-            logger.debug(`Severity lookup for ${checkId}: ${severity} (from GitHub provider)`);
-        }
-        return severity;
-    }
-    
-    if (logger) {
-        logger.debug(`Severity lookup for ${checkId}: not found in mappings (from GitHub provider)`);
-    }
-
-    return undefined;
-};
-
-/**
- * Maps Checkov severity strings to VS Code diagnostic severity levels
- * @param severity The Checkov severity string
- * @returns The corresponding VS Code DiagnosticSeverity
- */
-export const mapSeverityToVSCode = (severity: string): vscode.DiagnosticSeverity => {
-    switch (severity.toUpperCase()) {
-        case 'CRITICAL':
-        case 'HIGH':
-            return vscode.DiagnosticSeverity.Error;
-        case 'MEDIUM':
-            return vscode.DiagnosticSeverity.Warning;
-        case 'LOW':
-        case 'INFO':
-            return vscode.DiagnosticSeverity.Information;
-        case 'UNKNOWN':
-        default:
-            return vscode.DiagnosticSeverity.Warning; // fallback for unknown severities
-    }
-};
