@@ -1,15 +1,16 @@
 import * as assert from 'assert';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
 
-suite('Extension Test Suite', () => {
-    vscode.window.showInformationMessage('Start all tests.');
+suite('extension', () => {
+    test('activates and registers every command it contributes', async () => {
+        const extension = vscode.extensions.getExtension('XargsUK.checkov-prismaless');
+        assert.ok(extension, 'extension is installed in the test host');
+        await extension.activate();
 
-    test('Sample test', () => {
-        assert.equal(-1, [1, 2, 3].indexOf(5));
-        assert.equal(-1, [1, 2, 3].indexOf(0));
+        const contributed: string[] = extension.packageJSON.contributes.commands.map((command: { command: string }) => command.command);
+        const registered = await vscode.commands.getCommands(true);
+
+        assert.ok(contributed.length > 0);
+        assert.deepStrictEqual(contributed.filter(command => !registered.includes(command)), []);
     });
 });

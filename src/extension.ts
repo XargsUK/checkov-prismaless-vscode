@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import { CheckovInstallation, FailedCheckovCheck, installOrUpdateCheckov, runCheckovScan } from './checkov';
-import { applyDiagnostics } from './diagnostics';
-import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
-import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getScanCacheKey, checkovVersionKey } from './utils';
+import { createFindings, providedCodeActionKinds } from './findings';
+import { getLogger, isSupportedFileType, extensionVersion, runVersionCommand, getScanCacheKey, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setFilteredStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSkippedStatusBarItem, setStatusBarVersion, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
 import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout, getSkipPaths, getMinimumSeverity, getDockerSelinuxMode } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REFRESH_SEVERITY_MAPPINGS, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
@@ -14,7 +13,6 @@ import { createSeverityMappings, githubMappingSource, readBundledMappings } from
 import { createScanLifecycle, ScanOutcome } from './scanLifecycle';
 import { clearCache } from './scanCache';
 
-export const CHECKOV_MAP = 'checkovMap';
 const logFileName = 'checkov.log';
 
 export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';
@@ -95,9 +93,10 @@ export function activate(context: vscode.ExtensionContext): void {
     });
     context.subscriptions.push({ dispose: () => scanLifecycle.cancelAll() });
 
-    // Set diagnostics collection
     const diagnostics = vscode.languages.createDiagnosticCollection('checkov-alerts');
     context.subscriptions.push(diagnostics);
+    const documentFindings = createFindings({ collection: diagnostics, severityMappings });
+    context.workspaceState.update('checkovMap', undefined);
 
     // Set commands
     context.subscriptions.push(
@@ -147,7 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
             if (vscode.window.activeTextEditor) {
                 setReadyStatusBarItem();
-                applyDiagnostics(vscode.window.activeTextEditor.document, diagnostics, [], severityMappings, logger);
+                documentFindings.clear(vscode.window.activeTextEditor.document.uri);
             }
         }),
         vscode.commands.registerCommand(OPEN_CONFIGURATION_COMMAND, () => {
@@ -206,6 +205,8 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
         }),
+        vscode.workspace.onDidDeleteFiles(deleteEvent => deleteEvent.files.forEach(uri => documentFindings.clear(uri))),
+        vscode.workspace.onDidRenameFiles(renameEvent => renameEvent.files.forEach(({ oldUri }) => documentFindings.clear(oldUri))),
         vscode.workspace.onDidSaveTextDocument(saveEvent => {
             if (!extensionReady) return;
             if ((vscode.window.activeTextEditor && saveEvent.uri.toString() !== vscode.window.activeTextEditor.document.uri.toString())
@@ -264,10 +265,10 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
-    // set code action provider
     context.subscriptions.push(
-        vscode.languages.registerCodeActionsProvider([{ pattern: '**/*' }],
-            fixCodeActionProvider(context.workspaceState), { providedCodeActionKinds: providedCodeActionKinds })
+        vscode.languages.registerCodeActionsProvider([{ pattern: '**/*' }], {
+            provideCodeActions: (document, _range, codeActionContext) => documentFindings.codeActions(document, codeActionContext.diagnostics)
+        }, { providedCodeActionKinds })
     );
 
     const startScan = async (fileUri?: vscode.Uri, useCache = false): Promise<void> => {
@@ -279,7 +280,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (!targetUri) return;
 
         const uri = targetUri.toString();
-        diagnostics.delete(targetUri);
+        documentFindings.clear(targetUri);
 
         if (!fileUri && editor) {
             const skipPattern = findMatchingSkipPath(editor.document);
@@ -369,18 +370,14 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         const active = isActiveDocument(outcome.uri);
-        const findings = outcome.findings;
-        // The quick fix provider reads one shared map, so only the active document may replace it.
-        if (active) {
-            saveCheckovResult(context.workspaceState, findings);
-        }
+        const total = outcome.findings.length;
         const minimumSeverity = getMinimumSeverity();
-        const hidden = applyDiagnostics(document, diagnostics, findings, severityMappings, logger, minimumSeverity);
-        logger.debug(`Showing ${findings.length - hidden} of ${findings.length} findings (minimum severity: ${minimumSeverity})`);
+        const { hidden } = documentFindings.publish(document, outcome.findings, minimumSeverity);
+        logger.debug(`Showing ${total - hidden} of ${total} findings (minimum severity: ${minimumSeverity})`);
         if (!active) return;
 
         const hiddenMessage = hidden > 0 ? `${hidden} finding${hidden === 1 ? '' : 's'} below ${minimumSeverity} hidden by checkov-prismaless.minimumSeverity` : undefined;
-        if (findings.length > hidden) {
+        if (total > hidden) {
             setErrorStatusBarItem(hiddenMessage);
         } else if (hiddenMessage) {
             setFilteredStatusBarItem(hiddenMessage);

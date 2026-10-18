@@ -3,9 +3,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { exec, execFile, ExecOptions } from 'child_process';
 import winston from 'winston';
-import { CheckovInstallation, FailedCheckovCheck } from './checkov';
-import { DiagnosticReferenceCode } from './diagnostics';
-import { CHECKOV_MAP } from './extension';
+import { CheckovInstallation } from './checkov';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as os from 'os';
 import * as path from 'path';
@@ -57,27 +55,6 @@ export const isSupportedFileType = (fileName: string, showMessage = false): bool
     }
     return true;
 };
-
-export const saveCheckovResult = (state: vscode.Memento, checkovFails: FailedCheckovCheck[]): void => {
-    const checkovMap = checkovFails.reduce((prev, current) => ({
-        ...prev,
-        [createCheckovKey(current)]: current
-    }), []);
-    state.update(CHECKOV_MAP, checkovMap);
-};
-
-export const createDiagnosticKey = (diagnostic: vscode.Diagnostic): string => {
-    let checkId;
-    if (typeof(diagnostic.code) === 'string') {
-        // code is a custom policy in format: policy_id[:guideline]
-        const colonIndex = diagnostic.code.indexOf(':');
-        checkId = colonIndex === -1 ? diagnostic.code : diagnostic.code.substring(0, colonIndex);
-    } else {
-        checkId = (diagnostic.code as DiagnosticReferenceCode).value;
-    }
-    return `${checkId}-${diagnostic.range.start.line + 1}`;
-};
-export const createCheckovKey = (checkovFail: FailedCheckovCheck): string => `${checkovFail.checkId}-${checkovFail.fileLineRange[0]}`;
 
 export const getLogger = (logFileDir: string, logFileName: string): winston.Logger => winston.createLogger({
     level: 'debug',
