@@ -5,3 +5,4 @@ node_modules
 *.vsix
 .vscodeignore
 .DS_Store
+docs/agents
