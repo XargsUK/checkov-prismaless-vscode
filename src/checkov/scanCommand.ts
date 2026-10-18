@@ -1,7 +1,15 @@
 import * as fs from 'fs';
 import * as nodePath from 'path';
 
-export type CheckovInstallationMethod = 'pip3' | 'pipenv' | 'docker';
+export type CheckovInstallationMethod = 'docker' | 'pip3' | 'pipenv' | 'global';
+
+export const checkovImage = 'bridgecrew/checkov';
+
+export const checkovEnvironment = (extensionVersion: string, debugLogs: boolean | undefined): Record<string, string> => ({
+    BC_SOURCE: 'vscode',
+    BC_SOURCE_VERSION: extensionVersion,
+    ...(debugLogs ? { LOG_LEVEL: 'DEBUG' } : {})
+});
 export type DockerSelinuxMode = 'off' | 'relabel' | 'disable';
 export type PathLib = Pick<typeof nodePath, 'relative' | 'isAbsolute' | 'resolve' | 'basename' | 'join' | 'sep'>;
 
@@ -15,7 +23,7 @@ export interface ScanCommandOptions {
     installationMethod: CheckovInstallationMethod;
     checkovPath: string;
     checkovArgs?: string[];
-    dockerImageTag: string;
+    dockerImageTag?: string;
     containerName: string;
     extensionVersion: string;
     workspaceRoot?: string;
@@ -98,11 +106,10 @@ const getDockerArgs = (options: ScanCommandOptions, pathLib: PathLib): string[] 
 
     return [
         'run', '--rm', '--interactive', '--name', options.containerName,
-        ...(options.debugLogs ? ['--env', 'LOG_LEVEL=DEBUG'] : []),
-        '--env', 'BC_SOURCE=vscode', '--env', `BC_SOURCE_VERSION=${options.extensionVersion}`,
+        ...Object.entries(checkovEnvironment(options.extensionVersion, options.debugLogs)).flatMap(([name, value]) => ['--env', `${name}=${value}`]),
         ...(options.selinuxMode === 'disable' ? ['--security-opt', 'label=disable'] : []),
         ...mounts, '-w', dockerMountDir,
-        `bridgecrew/checkov:${options.dockerImageTag}`,
+        `${checkovImage}:${options.dockerImageTag ?? 'latest'}`,
         ...checkovArgs, '-f', fileToScan
     ];
 };

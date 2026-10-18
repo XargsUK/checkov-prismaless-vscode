@@ -1,11 +1,9 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import * as semver from 'semver';
-import { isWindows, asyncExecFile } from './utils';
 import { DockerSelinuxMode, resolveExternalChecksDir } from './checkov/scanCommand';
 
 const minCheckovVersion = '2.0.0';
-const minPythonVersion = '3.7.0';
 
 // These settings are not declared in package.json, so VS Code cannot restrict their scope.
 // Reading the user value only stops a workspace from setting them.
@@ -74,27 +72,6 @@ export const getCheckovVersion = async (logger: Logger): Promise<string> => {
         logger.debug(`Cleaned version: ${clean}`);
 
         return clean;
-    }
-};
-
-export const verifyPythonVersion = async (logger: Logger, pythonExe = 'python3', args: string[] = ['--version']): Promise<void> => {
-    logger.debug(`Getting python version with command: ${pythonExe} ${args.join(' ')}`);
-    try {
-        const [pythonVersionResponse] = await asyncExecFile(pythonExe, args);
-        logger.debug('Raw output:');
-        logger.debug(pythonVersionResponse);
-        const pythonVersion = pythonVersionResponse.split(' ')[1];
-        logger.debug(`Python version: ${pythonVersion}`);
-        if (semver.lt(pythonVersion, minPythonVersion)){
-            throw Error(`Invalid python version: ${pythonVersion} (must be >=${minPythonVersion})`);
-        }
-    } catch (error) {
-        if (isWindows && pythonExe === 'python3') {
-            logger.debug('python3 executable not found on Windows, falling back to python');
-            await verifyPythonVersion(logger, 'python');
-        } else {
-            throw error;
-        }
     }
 };
 

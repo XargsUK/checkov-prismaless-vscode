@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import { Logger } from 'winston';
-import { CheckovInstallation, FailedCheckovCheck, installOrUpdateCheckov, runCheckovScan } from './checkov';
+import { FailedCheckovCheck } from './checkov';
+import { CheckovInstallation, CheckovScanRequest, createCheckovInstaller } from './checkov/installation';
+import { nodeProcessHost } from './checkov/processHost';
 import { createFindings, providedCodeActionKinds } from './findings';
-import { getLogger, isSupportedFileType, extensionVersion, runVersionCommand, getScanCacheKey, checkovVersionKey } from './utils';
+import { getLogger, isSupportedFileType, extensionVersion, getScanCacheKey, checkovVersionKey } from './utils';
 import { initializeStatusBarItem, setErrorStatusBarItem, setFilteredStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSkippedStatusBarItem, setStatusBarVersion, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
 import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout, getSkipPaths, getMinimumSeverity, getDockerSelinuxMode } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REFRESH_SEVERITY_MAPPINGS, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
 import { findConfigFiles } from './parseCheckovConfig';
-import { clearVersionCache } from './checkov/checkovInstaller';
-import { DockerSelinuxMode } from './checkov/scanCommand';
 import { createSeverityMappings, githubMappingSource, readBundledMappings } from './severity';
 import { createScanLifecycle, ScanOutcome } from './scanLifecycle';
 import { clearCache } from './scanCache';
@@ -17,18 +17,7 @@ const logFileName = 'checkov.log';
 
 export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';
 
-type ScanOptions = {
-    certPath?: string,
-    useBcIds?: boolean,
-    debugLogs?: boolean,
-    noCertVerify?: boolean,
-    externalChecksDir?: string,
-    skipFrameworks?: string[],
-    frameworks?: string[],
-    skipChecks?: string[],
-    configPaths: string[],
-    selinuxMode?: DockerSelinuxMode
-};
+type ScanOptions = Omit<CheckovScanRequest, 'filePath'>;
 
 const findMatchingSkipPath = (document: vscode.TextDocument): string | undefined => {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -64,25 +53,19 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(severityMappings);
 
     initializeStatusBarItem(OPEN_CONFIGURATION_COMMAND);
-    let checkovInstallation: CheckovInstallation | null = null;
-    const checkovInstallationDir = vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath;
+    let checkovInstallation: CheckovInstallation | undefined;
+    const installer = createCheckovInstaller({
+        host: nodeProcessHost,
+        logger,
+        installationDir: vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath,
+        extensionVersion
+    });
 
     const invokeCheckov = async (filePath: string, options: ScanOptions, signal: AbortSignal): Promise<FailedCheckovCheck[]> => {
         if (!checkovInstallation) {
             throw new Error('Checkov is not installed');
         }
-        const tokenSource = new vscode.CancellationTokenSource();
-        const onAbort = () => tokenSource.cancel();
-        signal.addEventListener('abort', onAbort);
-        try {
-            const response = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, options.certPath, options.useBcIds, options.debugLogs,
-                options.noCertVerify, tokenSource.token, options.configPaths, options.externalChecksDir, options.skipFrameworks, options.frameworks,
-                options.skipChecks, options.selinuxMode);
-            return response.results.failedChecks;
-        } finally {
-            signal.removeEventListener('abort', onAbort);
-            tokenSource.dispose();
-        }
+        return checkovInstallation.scan({ ...options, filePath }, signal);
     };
 
     const scanLifecycle = createScanLifecycle<ScanOptions>({
@@ -105,24 +88,19 @@ export function activate(context: vscode.ExtensionContext): void {
                 extensionReady = false;
                 setSyncingStatusBarItem('Updating Checkov');
                 const checkovVersion = await getCheckovVersion(logger);
-                checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion);
-                logger.info('Checkov installation: ', checkovInstallation);
-
-                // Only update version for non-Docker installations
-                if (checkovInstallation.checkovInstallationMethod !== 'docker') {
-                    checkovInstallation.version = await runVersionCommand(logger, checkovInstallation, checkovVersion);
-                }
+                checkovInstallation = await installer.install(checkovVersion);
+                logger.info('Checkov installation: ', { method: checkovInstallation.method, version: checkovInstallation.displayVersion });
 
                 const previousCheckovVersion = context.globalState.get(checkovVersionKey);
-                if (previousCheckovVersion !== checkovInstallation.version) {
+                if (checkovInstallation.displayVersion && previousCheckovVersion !== checkovInstallation.displayVersion) {
                     logger.info('Previously installed checkov version does not match the newly installed one. Clearing results cache.');
-                    context.globalState.update(checkovVersionKey, checkovInstallation.version);
+                    context.globalState.update(checkovVersionKey, checkovInstallation.displayVersion);
                     clearCache(context.workspaceState, logger);
                 } else {
                     logger.debug('Previously installed checkov version matches the newly installed one');
                 }
 
-                setStatusBarVersion(checkovInstallation.actualVersion);
+                setStatusBarVersion(checkovInstallation.displayVersion);
                 setReadyStatusBarItem();
                 extensionReady = true;
                 if (vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor?.document.fileName))
@@ -154,15 +132,12 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand(OPEN_EXTERNAL_COMMAND, (uri: vscode.Uri) => vscode.env.openExternal(uri)),
         vscode.commands.registerCommand(GET_INSTALLATION_DETAILS_COMMAND, async () => {
-            if (!checkovInstallation?.version) {
+            if (!checkovInstallation) {
                 vscode.window.showWarningMessage(
                     "Checkov has not been installed. Try waiting a few seconds or running the 'Install or Update Checkov' command"
                 );
             } else {
-                await showAboutCheckovMessage(
-                    checkovInstallation.version,
-                    checkovInstallation.checkovInstallationMethod
-                );
+                await showAboutCheckovMessage(checkovInstallation.displayVersion ?? 'unknown', checkovInstallation.method);
             }
         }),
         vscode.commands.registerCommand(OPEN_CHECKOV_LOG, async () => {
@@ -172,7 +147,7 @@ export function activate(context: vscode.ExtensionContext): void {
             clearCache(context.workspaceState, logger);
         }),
         vscode.commands.registerCommand(CLEAR_VERSION_CACHE, async () => {
-            clearVersionCache();
+            installer.clearVersionCache();
             logger.info('Checkov version cache cleared');
             vscode.window.showInformationMessage('Checkov version cache cleared');
             // Re-run the installation to get a fresh version
@@ -314,6 +289,7 @@ export function activate(context: vscode.ExtensionContext): void {
             cacheKey,
             useCache,
             options: {
+                workspaceRoot: vscode.workspace.getWorkspaceFolder(targetUri)?.uri.fsPath,
                 certPath: getPathToCert(),
                 useBcIds: getUseBcIds(),
                 debugLogs: getUseDebugLogs(),
