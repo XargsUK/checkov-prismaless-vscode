@@ -46,6 +46,8 @@ jobs:
         run: |
           npm run compile
           npm run test:unit
+      - name: Update bundled severity mappings
+        run: npm run update-severity-mappings
       - name: Package
         run: npx vsce package --allow-star-activation --out extension.vsix
       - name: Publish to Marketplace

@@ -7,10 +7,16 @@ const response = await fetch(url);
 if (!response.ok) {
     throw new Error(`HTTP ${response.status} downloading ${url}`);
 }
+const severities = ['INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
 const text = await response.text();
-const mappingCount = Object.keys(JSON.parse(text).mappings ?? {}).length;
-if (mappingCount === 0) {
+const entries = Object.entries(JSON.parse(text).mappings ?? {});
+if (entries.length === 0) {
     throw new Error(`${url} has no mappings`);
 }
+const invalid = entries.find(([, severity]) => !severities.includes(severity));
+if (invalid) {
+    throw new Error(`${url} has an invalid severity ${invalid[1]} for ${invalid[0]}`);
+}
 await writeFile(destination, text);
-console.log(`Saved ${mappingCount} severity mappings to ${destination.pathname}`);
+console.log(`Saved ${entries.length} severity mappings to ${destination.pathname}`);
