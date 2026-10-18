@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Logger } from 'winston';
 import { FailedCheckovCheck } from './checkov';
 import { getSeverityForCheckId, mapSeverityToVSCode } from './utils';
-import { meetsMinimumSeverity } from './severityFilter';
+import { meetsMinimumSeverity, resolveSeverity } from './severityFilter';
 
 export const diagnosticSource = 'Checkov ';
 
@@ -26,11 +26,7 @@ export const applyDiagnostics = (document: vscode.TextDocument, diagnostics: vsc
                     value: failure.checkId
                 } : `${failure.checkId}${failure.guideline ? `: ${failure.guideline}` : ''}`;
 
-        // Get severity from mapping first, then fallback to failure.severity, then to MEDIUM
-        let severityString = getSeverityForCheckId(failure.checkId, logger);
-        if (!severityString) {
-            severityString = failure.severity || 'MEDIUM';
-        }
+        const severityString = resolveSeverity(getSeverityForCheckId(failure.checkId, logger), failure.severity);
 
         if (logger) {
             logger.debug(`Processing ${failure.checkId}: original severity=${failure.severity}, mapped severity=${severityString}`);

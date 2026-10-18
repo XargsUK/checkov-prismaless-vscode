@@ -316,9 +316,9 @@ export const loadSeverityMappings = (logger?: Logger): void => {
 /**
  * Gets the severity for a given Checkov check ID using the GitHub-based severity provider
  * @param checkId The Checkov check ID (e.g., "CKV_AWS_1")
- * @returns The severity string or "UNKNOWN" if not found
+ * @returns The severity string, or undefined if the check is not in the mappings
  */
-export const getSeverityForCheckId = (checkId: string, logger?: Logger): string => {
+export const getSeverityForCheckId = (checkId: string, logger?: Logger): string | undefined => {
     const provider = getSeverityProvider();
     const severity = provider.getSeverity(checkId);
     
@@ -330,10 +330,10 @@ export const getSeverityForCheckId = (checkId: string, logger?: Logger): string 
     }
     
     if (logger) {
-        logger.debug(`Severity lookup for ${checkId}: not found, returning UNKNOWN (from GitHub provider)`);
+        logger.debug(`Severity lookup for ${checkId}: not found in mappings (from GitHub provider)`);
     }
-    
-    return 'UNKNOWN';
+
+    return undefined;
 };
 
 /**

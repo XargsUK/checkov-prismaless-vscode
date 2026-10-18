@@ -7,3 +7,6 @@ export const meetsMinimumSeverity = (severity: string, minimumSeverity: string):
     const actual = severityOrder.indexOf(severity.toUpperCase());
     return minimum === -1 || actual === -1 || actual >= minimum;
 };
+
+export const resolveSeverity = (mapped: string | null | undefined, reported: string | undefined): string =>
+    mapped || reported || 'UNKNOWN';

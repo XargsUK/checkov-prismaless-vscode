@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { meetsMinimumSeverity } from '../../severityFilter';
+import { meetsMinimumSeverity, resolveSeverity } from '../../severityFilter';
 
 suite('meetsMinimumSeverity', () => {
     test('shows everything when no minimum is set', () => {
@@ -25,5 +25,26 @@ suite('meetsMinimumSeverity', () => {
     test('never hides a finding with an unknown severity', () => {
         assert.ok(meetsMinimumSeverity('UNKNOWN', 'CRITICAL'));
         assert.ok(meetsMinimumSeverity('', 'CRITICAL'));
+    });
+});
+
+suite('resolveSeverity', () => {
+    test('prefers the severity mapping', () => {
+        assert.strictEqual(resolveSeverity('HIGH', 'LOW'), 'HIGH');
+    });
+
+    test('falls back to the severity Checkov reported', () => {
+        assert.strictEqual(resolveSeverity(undefined, 'LOW'), 'LOW');
+        assert.strictEqual(resolveSeverity(null, 'INFO'), 'INFO');
+    });
+
+    test('is UNKNOWN when neither source has a severity', () => {
+        assert.strictEqual(resolveSeverity(undefined, undefined), 'UNKNOWN');
+        assert.strictEqual(resolveSeverity(null, ''), 'UNKNOWN');
+    });
+
+    test('lets the minimum severity hide an unmapped check Checkov reported as low', () => {
+        assert.ok(!meetsMinimumSeverity(resolveSeverity(undefined, 'LOW'), 'MEDIUM'));
+        assert.ok(meetsMinimumSeverity(resolveSeverity(undefined, undefined), 'CRITICAL'));
     });
 });
