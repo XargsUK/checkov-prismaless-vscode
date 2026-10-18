@@ -35,12 +35,11 @@ suite('resolveSeverity', () => {
 
     test('falls back to the severity Checkov reported', () => {
         assert.strictEqual(resolveSeverity(undefined, 'LOW'), 'LOW');
-        assert.strictEqual(resolveSeverity(null, 'INFO'), 'INFO');
     });
 
     test('is UNKNOWN when neither source has a severity', () => {
         assert.strictEqual(resolveSeverity(undefined, undefined), 'UNKNOWN');
-        assert.strictEqual(resolveSeverity(null, ''), 'UNKNOWN');
+        assert.strictEqual(resolveSeverity(undefined, ''), 'UNKNOWN');
     });
 
     test('lets the minimum severity hide an unmapped check Checkov reported as low', () => {

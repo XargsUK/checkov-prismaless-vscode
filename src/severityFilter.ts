@@ -8,5 +8,5 @@ export const meetsMinimumSeverity = (severity: string, minimumSeverity: string):
     return minimum === -1 || actual === -1 || actual >= minimum;
 };
 
-export const resolveSeverity = (mapped: string | null | undefined, reported: string | undefined): string =>
+export const resolveSeverity = (mapped: string | undefined, reported: string | undefined): string =>
     mapped || reported || 'UNKNOWN';
