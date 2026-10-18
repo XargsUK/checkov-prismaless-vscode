@@ -1,4 +1,5 @@
 import type { Memento } from 'vscode';
+import * as fs from 'fs';
 import { Logger } from 'winston';
 import { Clock, systemClock } from './clock';
 
@@ -19,6 +20,7 @@ export interface SeverityMappings {
 export interface SeverityMappingsDependencies {
     source: MappingSource;
     cache: Memento;
+    bundledMappings?: unknown;
     logger: Logger;
     onMappingsChanged: (change: MappingsChange) => void;
     clock?: Clock;
@@ -76,21 +78,27 @@ const parseMappings = (file: unknown): Record<string, string> => {
     return Object.fromEntries(entries.map(([checkId, severity]) => [checkId.toUpperCase(), severity as string]));
 };
 
-// The previous provider cached the whole mappings file without a release version,
-// so its mappings are kept until the first refresh replaces them.
-const readLegacyCache = (cache: Memento, logger: Logger): CachedMappings | undefined => {
-    const legacy = cache.get<{ data?: unknown }>(legacyCacheKey);
-    if (!legacy) return undefined;
-    cache.update(legacyCacheKey, undefined).then(undefined, error => logger.warn('Failed to remove the old severity mappings cache', { error }));
+// Mappings without a release version (bundled with the extension, or cached by the previous provider)
+// are used until the first refresh replaces them.
+const unreleasedMappings = (file: unknown, description: string, logger: Logger): CachedMappings | undefined => {
+    if (file === undefined) return undefined;
     try {
-        return { mappings: parseMappings(legacy.data), releaseVersion: '', cachedAt: 0 };
-    } catch {
+        return { mappings: parseMappings(file), releaseVersion: '', cachedAt: 0 };
+    } catch (error) {
+        logger.warn(`Ignoring the ${description} severity mappings`, { error });
         return undefined;
     }
 };
 
-export const createSeverityMappings = ({ source, cache, logger, onMappingsChanged, clock = systemClock }: SeverityMappingsDependencies): SeverityMappings => {
-    let current = cache.get<CachedMappings>(cacheKey) ?? readLegacyCache(cache, logger);
+const readLegacyCache = (cache: Memento, logger: Logger): CachedMappings | undefined => {
+    const legacy = cache.get<{ data?: unknown }>(legacyCacheKey);
+    if (!legacy) return undefined;
+    cache.update(legacyCacheKey, undefined).then(undefined, error => logger.warn('Failed to remove the old severity mappings cache', { error }));
+    return unreleasedMappings(legacy.data, 'previously cached', logger);
+};
+
+export const createSeverityMappings = ({ source, cache, bundledMappings, logger, onMappingsChanged, clock = systemClock }: SeverityMappingsDependencies): SeverityMappings => {
+    let current = cache.get<CachedMappings>(cacheKey) ?? readLegacyCache(cache, logger) ?? unreleasedMappings(bundledMappings, 'bundled', logger);
     let inFlight: Promise<RefreshResult> | undefined;
     let disposed = false;
     let timer: unknown;
@@ -118,10 +126,10 @@ export const createSeverityMappings = ({ source, cache, logger, onMappingsChange
     };
 
     const refreshAndReport = async (): Promise<void> => {
-        const hadMappings = current !== undefined;
+        const hadReleasedMappings = Boolean(current?.releaseVersion);
         try {
             if (await refresh() === 'updated' && !disposed) {
-                onMappingsChanged(hadMappings ? 'updated' : 'loaded');
+                onMappingsChanged(hadReleasedMappings ? 'updated' : 'loaded');
             }
         } catch (error) {
             logger.warn('Failed to refresh severity mappings', { error });
@@ -190,3 +198,12 @@ export const githubMappingSource = (logger: Logger): MappingSource => ({
     },
     fetchMappings: () => downloadJson(mappingsUrl, logger)
 });
+
+export const readBundledMappings = (filePath: string, logger: Logger): unknown => {
+    try {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (error) {
+        logger.warn(`Could not read the bundled severity mappings from ${filePath}`, { error });
+        return undefined;
+    }
+};

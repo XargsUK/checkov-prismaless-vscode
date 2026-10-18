@@ -10,7 +10,7 @@ import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDAT
 import { findConfigFiles } from './parseCheckovConfig';
 import { clearVersionCache } from './checkov/checkovInstaller';
 import { DockerSelinuxMode } from './checkov/scanCommand';
-import { createSeverityMappings, githubMappingSource } from './severity';
+import { createSeverityMappings, githubMappingSource, readBundledMappings } from './severity';
 import { createScanLifecycle, ScanOutcome } from './scanLifecycle';
 import { clearCache } from './scanCache';
 
@@ -54,6 +54,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const severityMappings = createSeverityMappings({
         source: githubMappingSource(logger),
         cache: context.globalState,
+        bundledMappings: readBundledMappings(vscode.Uri.joinPath(context.extensionUri, 'resources', 'checkov_severity_mappings.json').fsPath, logger),
         logger,
         onMappingsChanged: change => {
             rescanActiveDocument();

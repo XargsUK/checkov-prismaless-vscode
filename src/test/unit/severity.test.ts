@@ -23,11 +23,12 @@ class FakeMappingSource implements MappingSource {
     }
 }
 
-const setup = (cache = new InMemoryMemento(), source = new FakeMappingSource(), clock = new ManualClock()) => {
+const setup = (cache = new InMemoryMemento(), source = new FakeMappingSource(), clock = new ManualClock(), bundledMappings?: unknown) => {
     const changes: string[] = [];
     const severityMappings = createSeverityMappings({
         source,
         cache,
+        bundledMappings,
         clock,
         logger: winston.createLogger({ silent: true }),
         onMappingsChanged: change => changes.push(change)
@@ -132,6 +133,46 @@ suite('severity mappings', () => {
         assert.strictEqual(severityMappings.resolve('CKV_AWS_1', 'MEDIUM'), 'MEDIUM');
         assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'UNKNOWN');
         assert.deepStrictEqual(changes, []);
+    });
+
+    test('a first run without network uses the mappings bundled with the extension', async () => {
+        const offline = new FakeMappingSource();
+        offline.offline = true;
+        const { severityMappings, changes } = setup(new InMemoryMemento(), offline, new ManualClock(), { mappings: { CKV_AWS_5: 'HIGH' } });
+        await settle();
+
+        assert.strictEqual(severityMappings.resolve('CKV_AWS_5', undefined), 'HIGH');
+        assert.strictEqual(offline.releaseChecks, 1);
+        assert.deepStrictEqual(changes, []);
+    });
+
+    test('downloaded mappings replace the bundled ones and count as the first load', async () => {
+        const { severityMappings, changes } = setup(new InMemoryMemento(), new FakeMappingSource(), new ManualClock(), { mappings: { CKV_AWS_1: 'INFO' } });
+        await settle();
+
+        assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'HIGH');
+        assert.deepStrictEqual(changes, ['loaded']);
+    });
+
+    test('cached mappings take precedence over the bundled ones', async () => {
+        const cache = new InMemoryMemento();
+        const clock = new ManualClock();
+        setup(cache, new FakeMappingSource(), clock).severityMappings.dispose();
+        await settle();
+
+        const offline = new FakeMappingSource();
+        offline.offline = true;
+        const { severityMappings } = setup(cache, offline, clock, { mappings: { CKV_AWS_1: 'INFO' } });
+
+        assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'HIGH');
+    });
+
+    test('a bundled file that is not valid is ignored', async () => {
+        const offline = new FakeMappingSource();
+        offline.offline = true;
+        const { severityMappings } = setup(new InMemoryMemento(), offline, new ManualClock(), { mappings: {} });
+
+        assert.strictEqual(severityMappings.resolve('CKV_AWS_1', 'LOW'), 'LOW');
     });
 
     test('a day-old cache is still used when the network is down', async () => {
