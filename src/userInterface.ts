@@ -39,37 +39,39 @@ export const initializeStatusBarItem = (onClickCommand: string): void  => {
     statusBarItem.show();
 };
 
-const setStatusBarItem = (icon: string, version: string | undefined, text?: string, tooltip?: string): void => {
-    statusBarItem.text = getStatusBarText(icon, version, text);
+let statusBarVersion: string | undefined;
+
+export const setStatusBarVersion = (version: string | undefined): void => {
+    statusBarVersion = version;
+};
+
+const setStatusBarItem = (icon: string, text?: string, tooltip?: string): void => {
+    statusBarItem.text = getStatusBarText(icon, statusBarVersion, text);
     statusBarItem.tooltip = tooltip;
 };
 
-export const setReadyStatusBarItem = (version: string | undefined): void => {
-    setStatusBarItem('gear', version);
+export const setReadyStatusBarItem = (): void => {
+    setStatusBarItem('gear');
 };
 
-export const setMissingConfigurationStatusBarItem = (version: string | undefined): void => {
-    setStatusBarItem('exclude', version);
+export const setSyncingStatusBarItem = (text = 'Checkov'): void => {
+    setStatusBarItem('sync~spin', text);
 };
 
-export const setSyncingStatusBarItem = (version: string | undefined, text = 'Checkov'): void => {
-    setStatusBarItem('sync~spin', version, text);
+export const setErrorStatusBarItem = (tooltip?: string): void => {
+    setStatusBarItem('error', undefined, tooltip);
 };
 
-export const setErrorStatusBarItem = (version: string | undefined, tooltip?: string): void => {
-    setStatusBarItem('error', version, undefined, tooltip);
+export const setPassedStatusBarItem = (): void => {
+    setStatusBarItem('pass');
 };
 
-export const setPassedStatusBarItem = (version: string | undefined): void => {
-    setStatusBarItem('pass', version);
+export const setSkippedStatusBarItem = (pattern: string): void => {
+    setStatusBarItem('circle-slash', 'Checkov (skipped)', `Not scanned: matches "${pattern}" in checkov-prismaless.skipPaths`);
 };
 
-export const setSkippedStatusBarItem = (version: string | undefined, pattern: string): void => {
-    setStatusBarItem('circle-slash', version, 'Checkov (skipped)', `Not scanned: matches "${pattern}" in checkov-prismaless.skipPaths`);
-};
-
-export const setFilteredStatusBarItem = (version: string | undefined, tooltip: string): void => {
-    setStatusBarItem('filter', version, 'Checkov (filtered)', tooltip);
+export const setFilteredStatusBarItem = (tooltip: string): void => {
+    setStatusBarItem('filter', 'Checkov (filtered)', tooltip);
 };
 
 const getStatusBarText = (icon: string | undefined, version: string | undefined, text = 'Checkov'): string => {

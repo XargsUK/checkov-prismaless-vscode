@@ -1,4 +1,4 @@
-import { FileScanCacheEntry } from '../utils';
+import { FileScanCacheEntry } from '../scanCache';
 
 export interface FailedCheckovCheck {
     checkId: string;

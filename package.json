@@ -192,7 +192,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/lodash": "^4.17.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.0.0",
     "@types/semver": "^7.7.0",
@@ -208,7 +207,6 @@
     "typescript-eslint": "^8.61.1"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
     "semver": "^7.7.2",
     "winston": "^3.17.0"
   },

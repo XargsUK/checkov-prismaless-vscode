@@ -9,7 +9,6 @@ import { CHECKOV_MAP } from './extension';
 import { showUnsupportedFileMessage } from './userInterface';
 import * as os from 'os';
 import * as path from 'path';
-import { FileCache, ResultsCache } from './checkov/models';
 import { getSeverityProvider } from './severityProvider';
 
 
@@ -18,20 +17,10 @@ export const extensionVersion = extensionData ? extensionData.packageJSON.versio
 
 export const isWindows = process.platform === 'win32';
 
-export const cacheDateKey = 'CKV_CACHE_DATE';
-export const cacheResultsKey = 'CKV_CACHE_RESULTS';
 export const checkovVersionKey = 'CKV_VERSION';
-
-const maxCacheSizePerFile = 10;
 
 const unsupportedExtensions: string[] = ['.log'];
 const unsupportedFileNames: string[] = [];
-
-export type FileScanCacheEntry = {
-    fileHash: string,
-    filename: string,
-    results: FailedCheckovCheck[]
-};
 
 type ExecOutput = [stdout: string, stderr: string];
 const shellSafeToken = /^[\w.:/=~-]+$/;
@@ -211,83 +200,6 @@ const getFileHashOrUnreadable = (filename: string): string => {
 // Results depend on the config files as well as the scanned file, so all of them feed the cache key.
 export const getScanCacheKey = (filename: string, configPaths: string[]): string =>
     [getFileHash(filename), ...configPaths.map(getFileHashOrUnreadable)].join(':');
-
-export const getCachedResults = (context: vscode.ExtensionContext, fileHash: string, filename: string, logger: Logger): FileScanCacheEntry | undefined => {
-    logger.debug(`Getting cached results for hash ${fileHash}`);
-    validateCacheExpiration(context, logger);
-    const cache: ResultsCache | undefined = context.workspaceState.get(cacheResultsKey);
-    return cache && cache[filename] ? findSavedScanForFile(fileHash, filename, cache[filename]) : undefined;
-};
-
-export const saveCachedResults = (context: vscode.ExtensionContext, fileHash: string, filename: string, results: FailedCheckovCheck[], logger: Logger): void => {
-    logger.debug(`Saving results for file ${filename} (hash: ${fileHash})`);
-    validateCacheExpiration(context, logger);
-
-    const cache: ResultsCache | undefined = context.workspaceState.get(cacheResultsKey);
-    if (cache) {
-        let fileCache = cache[filename];
-        if (!fileCache) {
-            logger.debug(`First cache entry for file ${filename}`);
-            fileCache = { oldest: 0, elements: [] };
-            cache[filename] = fileCache;
-        }
-
-        const entry: FileScanCacheEntry = { fileHash, filename, results };
-        if (!fileCacheContainsEntry(entry, fileCache)) {
-            addSavedScanForFile(entry, fileCache);
-            logger.debug(`File ${filename} now has ${fileCache.elements.length} saved results`);
-        } else {
-            logger.debug(`Cache for file ${filename} already has an entry for hash ${fileHash}`);
-        }
-    }
-};
-
-export const clearCache = (context: vscode.ExtensionContext, logger: Logger): void => {
-    logger.debug('Clearing results cache');
-    context.workspaceState.update(cacheResultsKey, undefined);  // undefined removes the key
-    context.workspaceState.update(cacheDateKey, undefined);
-};
-
-const getDate = (): number => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today.getTime();
-};
-
-const validateCacheExpiration = (context: vscode.ExtensionContext, logger: Logger): void => {
-    const today = getDate();
-    logger.debug(`Today: ${today}`);
-    const cacheDate = context.workspaceState.get(cacheDateKey);
-    logger.debug(`Cache date: ${cacheDate}`);
-
-    if (cacheDate !== today) {
-        logger.debug('Cache date was not set or cache is stale. Starting new cache.');
-        context.workspaceState.update(cacheResultsKey, {});
-        context.workspaceState.update(cacheDateKey, today);
-    } else {
-        logger.debug(`Cache date (${cacheDate}) is not stale`);
-    }
-};
-
-const addSavedScanForFile = (element: FileScanCacheEntry, fileCache: FileCache): void => {
-    if (fileCache.elements.length < maxCacheSizePerFile) {
-        fileCache.elements.push(element);
-    } else {
-        fileCache.elements[fileCache.oldest] = element;
-        fileCache.oldest++;
-        if (fileCache.oldest === fileCache.elements.length) {
-            fileCache.oldest = 0;
-        }
-    }
-};
-
-const findSavedScanForFile = (fileHash: string, filename: string, fileCache: FileCache): FileScanCacheEntry | undefined => {
-    return fileCache.elements.find(e => e.fileHash === fileHash && e.filename === filename);
-};
-
-const fileCacheContainsEntry = (element: FileScanCacheEntry, fileCache: FileCache): boolean => {
-    return findSavedScanForFile(element.fileHash, element.filename, fileCache) !== undefined;
-};
 
 /**
  * Loads severity mappings using the GitHub-based severity provider
