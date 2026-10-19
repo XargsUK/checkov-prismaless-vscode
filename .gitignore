@@ -3,5 +3,6 @@ dist
 node_modules
 .vscode-test/
 *.vsix
-.vscodeignore
 .DS_Store
+docs/agents
+resources/checkov_severity_mappings.json

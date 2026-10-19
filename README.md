@@ -34,12 +34,12 @@ The Checkov extension will invoke the latest version of ```Checkov```.
 ### Usage
 
 * Open a file you wish to scan with checkov in VSCode.
-* Open the command palette `(Ctrl+Shift+P)` or `(Command+Shift+P)` and run the command `Checkov Scan`.
+* Open the command palette `(Ctrl+Shift+P)` or `(Command+Shift+P)` and run the command `Checkov: Run Scan`.
 * Scan results should now appear in your editor.
 * Click a scan to see its details. Details will include the violating policy and a link to step-by-step fix guidelines.
 * In most cases, the Details will include a fix option. This will either add, remove or replace an unwanted configuration, based on the Checkov fix dictionaries.
 * You can skip checks by adding an inline skip annotation ```checkov:skip=<check_id>:<suppression_comment>```.
-* You can skip checks by adding a `.checkov.yaml` to your workspace folder or to any directory below it (see [Checkov Configuration file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file)). The config nearest to the scanned file is used. You can also override certain configuration values by using the extension settings (`framework`, `skip-framework`, `skip-check`). By default, whenever you edit your checkov config file or override the values using the extension settings, the checkov cache will be cleared - this behaviour can be disabled.
+* You can skip checks by adding a `.checkov.yaml` to your workspace folder or to any directory below it (see [Checkov Configuration file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file)). The config nearest to the scanned file is used. You can also override certain configuration values by using the extension settings (`framework`, `skip-framework`, `skip-check`). Editing a config file, or a setting that changes scan results, always rescans the file rather than reusing cached results. In a multi-root workspace, each folder can set its own scan settings.
 * The extension will continue to scan file modifications and highlight errors in your editor upon every material resource modification.
 * To stop certain files being scanned, add glob patterns to the `skipPaths` setting (for example `**/*.md`).
 * To hide lower severity findings, set `minimumSeverity`. Findings with an unknown severity are always shown.

@@ -1,46 +1,25 @@
 import * as vscode from 'vscode';
-import debounce from 'lodash/debounce';
 import { Logger } from 'winston';
-import { CheckovInstallation, FailedCheckovCheck, installOrUpdateCheckov, runCheckovScan } from './checkov';
-import { applyDiagnostics } from './diagnostics';
-import { fixCodeActionProvider, providedCodeActionKinds } from './suggestFix';
-import { getLogger, saveCheckovResult, isSupportedFileType, extensionVersion, runVersionCommand, getScanCacheKey, saveCachedResults, getCachedResults, clearCache, checkovVersionKey } from './utils';
-import { initializeStatusBarItem, setErrorStatusBarItem, setFilteredStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSkippedStatusBarItem, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
-import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getPathToCert, getUseBcIds, getUseDebugLogs, getExternalChecksDir, getNoCertVerify, getSkipFrameworks, getFrameworks, getSkipChecks, getMaximumConcurrentScans, getScanTimeout, getSkipPaths, getMinimumSeverity, getDockerSelinuxMode } from './configuration';
+import { FailedCheckovCheck } from './checkov';
+import { CheckovInstallation, createCheckovInstaller } from './checkov/installation';
+import { nodeProcessHost } from './checkov/processHost';
+import { createFindings, providedCodeActionKinds } from './findings';
+import { getLogger, isSupportedFileType, extensionVersion, getScanCacheKey, checkovVersionKey } from './utils';
+import { initializeStatusBarItem, setErrorStatusBarItem, setFilteredStatusBarItem, setPassedStatusBarItem, setReadyStatusBarItem, setSkippedStatusBarItem, setStatusBarVersion, setSyncingStatusBarItem, showAboutCheckovMessage, showContactUsDetails } from './userInterface';
+import { getCheckovVersion, shouldDisableErrorMessage, shouldClearCacheUponConfigUpdate, getMaximumConcurrentScans, getScanTimeout, vscodeSettingsReader } from './configuration';
 import { CLEAR_RESULTS_CACHE, GET_INSTALLATION_DETAILS_COMMAND, INSTALL_OR_UPDATE_CHECKOV_COMMAND, OPEN_CHECKOV_LOG, OPEN_CONFIGURATION_COMMAND, OPEN_EXTERNAL_COMMAND, REFRESH_SEVERITY_MAPPINGS, REMOVE_DIAGNOSTICS_COMMAND, RUN_FILE_SCAN_COMMAND } from './commands';
-import { findConfigFiles } from './parseCheckovConfig';
-import { clearVersionCache } from './checkov/checkovInstaller';
-import { initializeSeverityProvider, getSeverityProvider } from './severityProvider';
+import { createSeverityMappings, githubMappingSource, readBundledMappings } from './severity';
+import { createScanLifecycle, ScanOutcome } from './scanLifecycle';
+import { clearCache } from './scanCache';
+import { CheckovOptions, createScanSettings } from './scanSettings';
 
-export const CHECKOV_MAP = 'checkovMap';
 const logFileName = 'checkov.log';
 
 export const CLEAR_VERSION_CACHE = 'checkov-prismaless.clear-version-cache';
 
-type RunScanOptions = {
-  certPath?: string,
-  useBcIds?: boolean,
-  debugLogs?: boolean,
-  noCertVerify?: boolean,
-  cancelToken: vscode.CancellationToken,
-  externalChecksDir?: string,
-  fileUri?: vscode.Uri,
-  skipFrameworks?: string[],
-  frameworks?: string[],
-  skipChecks?: string[],
-  configPaths: string[],
-  cacheKey: string
-};
-
-// Track active scan tokens with document URI for better management
-interface ActiveScan {
-    uri: string;
-    tokenSource: vscode.CancellationTokenSource;
-}
-
-const findMatchingSkipPath = (document: vscode.TextDocument): string | undefined => {
+const findMatchingSkipPath = (document: vscode.TextDocument, skipPaths: string[]): string | undefined => {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-    return getSkipPaths(document.uri).find(glob =>
+    return skipPaths.find(glob =>
         vscode.languages.match({ pattern: workspaceFolder ? new vscode.RelativePattern(workspaceFolder, glob) : glob }, document) > 0);
 };
 
@@ -49,53 +28,104 @@ export function activate(context: vscode.ExtensionContext): void {
     const logger: Logger = getLogger(context.logUri.fsPath, logFileName);
     logger.info('Starting Checkov Extension.', { extensionVersion, vscodeVersion: vscode.version });
 
-    // Initialize severity provider on startup
-    initializeSeverityProvider(context, logger);
-
-    const activeScanTokens: ActiveScan[] = [];
-    initializeStatusBarItem(OPEN_CONFIGURATION_COMMAND);
     let extensionReady = false;
-    let checkovInstallation: CheckovInstallation | null = null;
-    const checkovInstallationDir = vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath;
-    const MAX_CONCURRENT_SCANS = getMaximumConcurrentScans();
+    let installRunning = false;
+    let latestRequestedUri: string | undefined;
+    let reinstallWanted = false;
+    const scanSettings = createScanSettings({ reader: vscodeSettingsReader, logger });
 
-    // Set diagnostics collection
+    const rescanActiveDocument = (): void => {
+        if (extensionReady && vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor.document.fileName)) {
+            vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+        }
+    };
+
+    const severityMappings = createSeverityMappings({
+        source: githubMappingSource(logger),
+        cache: context.globalState,
+        loadBundledMappings: () => readBundledMappings(vscode.Uri.joinPath(context.extensionUri, 'resources', 'checkov_severity_mappings.json').fsPath, logger),
+        logger,
+        onMappingsChanged: change => {
+            rescanActiveDocument();
+            if (change === 'updated') {
+                vscode.window.showInformationMessage('Checkov severity mappings updated');
+            }
+        }
+    });
+    context.subscriptions.push(severityMappings);
+
+    initializeStatusBarItem(OPEN_CONFIGURATION_COMMAND);
+    let checkovInstallation: CheckovInstallation | undefined;
+    const installer = createCheckovInstaller({
+        host: nodeProcessHost,
+        logger,
+        installationDir: vscode.Uri.joinPath(context.globalStorageUri, 'checkov-installation').fsPath,
+        extensionVersion
+    });
+
+    const invokeCheckov = async (filePath: string, options: CheckovOptions, signal: AbortSignal): Promise<FailedCheckovCheck[]> => {
+        if (!checkovInstallation) {
+            throw new Error('Checkov is not installed');
+        }
+        return checkovInstallation.scan({ ...options, filePath }, signal);
+    };
+
+    const scanLifecycle = createScanLifecycle<CheckovOptions>({
+        invoke: invokeCheckov,
+        cache: context.workspaceState,
+        limits: () => ({ timeoutSeconds: getScanTimeout(), maximumConcurrentScans: getMaximumConcurrentScans() }),
+        logger
+    });
+    context.subscriptions.push({ dispose: () => scanLifecycle.cancelAll() });
+
     const diagnostics = vscode.languages.createDiagnosticCollection('checkov-alerts');
     context.subscriptions.push(diagnostics);
+    const documentFindings = createFindings({ collection: diagnostics, severityMappings });
+    context.workspaceState.update('checkovMap', undefined);
 
     // Set commands
     context.subscriptions.push(
         vscode.commands.registerCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND, async () => {
+            // A request made during an install, such as a checkovVersion change, runs once that install finishes.
+            if (installRunning) {
+                reinstallWanted = true;
+                return;
+            }
+            installRunning = true;
             try {
                 extensionReady = false;
-                setSyncingStatusBarItem(checkovInstallation?.actualVersion, 'Updating Checkov');
+                setSyncingStatusBarItem('Updating Checkov');
                 const checkovVersion = await getCheckovVersion(logger);
-                checkovInstallation = await installOrUpdateCheckov(logger, checkovInstallationDir, checkovVersion);
-                logger.info('Checkov installation: ', checkovInstallation);
-
-                // Only update version for non-Docker installations
-                if (checkovInstallation.checkovInstallationMethod !== 'docker') {
-                    checkovInstallation.version = await runVersionCommand(logger, checkovInstallation, checkovVersion);
-                }
+                checkovInstallation = await installer.install(checkovVersion);
+                logger.info('Checkov installation: ', { method: checkovInstallation.method, version: checkovInstallation.displayVersion });
 
                 const previousCheckovVersion = context.globalState.get(checkovVersionKey);
-                if (previousCheckovVersion !== checkovInstallation.version) {
+                if (checkovInstallation.displayVersion && previousCheckovVersion !== checkovInstallation.displayVersion) {
                     logger.info('Previously installed checkov version does not match the newly installed one. Clearing results cache.');
-                    context.globalState.update(checkovVersionKey, checkovInstallation.version);
-                    clearCache(context, logger);
+                    context.globalState.update(checkovVersionKey, checkovInstallation.displayVersion);
+                    clearCache(context.workspaceState, logger);
                 } else {
                     logger.debug('Previously installed checkov version matches the newly installed one');
                 }
 
-                setReadyStatusBarItem(checkovInstallation.actualVersion);
-                extensionReady = true;
-                if (vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor?.document.fileName))
-                    vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+                // A queued reinstall replaces this installation straight away, so nothing is scanned with it.
+                if (!reinstallWanted) {
+                    setStatusBarVersion(checkovInstallation.displayVersion);
+                    setReadyStatusBarItem();
+                    extensionReady = true;
+                    rescanActiveDocument();
+                }
             } catch (error) {
-                setErrorStatusBarItem(checkovInstallation?.actualVersion);
+                setErrorStatusBarItem();
                 logger.error('Error occurred while preparing Checkov. Verify your settings, or try to reload vscode.', { error });
                 if (!shouldDisableErrorMessage()) {
                     showContactUsDetails(context.logUri, logFileName);
+                }
+            } finally {
+                installRunning = false;
+                if (reinstallWanted) {
+                    reinstallWanted = false;
+                    vscode.commands.executeCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND);
                 }
             }
         }),
@@ -107,10 +137,13 @@ export function activate(context: vscode.ExtensionContext): void {
             }
             await startScan(fileUri, true);
         }),
-        vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
-            if (vscode.window.activeTextEditor) {
-                setReadyStatusBarItem(checkovInstallation?.actualVersion);
-                applyDiagnostics(vscode.window.activeTextEditor.document, diagnostics, [], logger);
+        // Quick fixes pass the document they changed, which need not be the active one.
+        vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, (uri?: vscode.Uri) => {
+            const target = uri ?? vscode.window.activeTextEditor?.document.uri;
+            if (!target) return;
+            documentFindings.clear(target);
+            if (isActiveDocument(target.toString())) {
+                setReadyStatusBarItem();
             }
         }),
         vscode.commands.registerCommand(OPEN_CONFIGURATION_COMMAND, () => {
@@ -118,25 +151,22 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand(OPEN_EXTERNAL_COMMAND, (uri: vscode.Uri) => vscode.env.openExternal(uri)),
         vscode.commands.registerCommand(GET_INSTALLATION_DETAILS_COMMAND, async () => {
-            if (!checkovInstallation?.version) {
+            if (!checkovInstallation) {
                 vscode.window.showWarningMessage(
                     "Checkov has not been installed. Try waiting a few seconds or running the 'Install or Update Checkov' command"
                 );
             } else {
-                await showAboutCheckovMessage(
-                    checkovInstallation.version,
-                    checkovInstallation.checkovInstallationMethod
-                );
+                await showAboutCheckovMessage(checkovInstallation.displayVersion ?? 'unknown', checkovInstallation.method);
             }
         }),
         vscode.commands.registerCommand(OPEN_CHECKOV_LOG, async () => {
             vscode.window.showTextDocument(vscode.Uri.joinPath(context.logUri, logFileName));
         }),
         vscode.commands.registerCommand(CLEAR_RESULTS_CACHE, async () => {
-            clearCache(context, logger);
+            clearCache(context.workspaceState, logger);
         }),
         vscode.commands.registerCommand(CLEAR_VERSION_CACHE, async () => {
-            clearVersionCache();
+            installer.clearVersionCache();
             logger.info('Checkov version cache cleared');
             vscode.window.showInformationMessage('Checkov version cache cleared');
             // Re-run the installation to get a fresh version
@@ -146,17 +176,11 @@ export function activate(context: vscode.ExtensionContext): void {
             try {
                 logger.info('Manually refreshing severity mappings from GitHub');
                 vscode.window.showInformationMessage('Refreshing severity mappings...');
-
-                const provider = getSeverityProvider();
-                if (provider) {
-                    await provider.forceRefresh(); // Force update
-                    logger.info('Severity mappings refreshed successfully');
-                    vscode.window.showInformationMessage('Severity mappings refreshed successfully');
-                } else {
-                    logger.warn('Severity provider not initialized, initializing now');
-                    await initializeSeverityProvider(context, logger);
-                    vscode.window.showInformationMessage('Severity provider initialized and mappings loaded');
+                const result = await severityMappings.refresh({ force: true });
+                if (result === 'updated') {
+                    rescanActiveDocument();
                 }
+                vscode.window.showInformationMessage(result === 'updated' ? 'Checkov severity mappings updated' : 'Checkov severity mappings are already up to date');
             } catch (error) {
                 logger.error('Failed to refresh severity mappings', { error });
                 vscode.window.showErrorMessage('Failed to refresh severity mappings. Check logs for details.');
@@ -168,18 +192,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(changeEvent => {
-            if (!extensionReady) return;
+            // VS Code also sends an event with no content changes when only the dirty state changes, for example on save.
+            if (!extensionReady || changeEvent.contentChanges.length === 0) return;
             if ((vscode.window.activeTextEditor &&
                 changeEvent.document.uri.toString() !== vscode.window.activeTextEditor.document.uri.toString())
                 || !isSupportedFileType(changeEvent.document.fileName))
                 return;
-            vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
+            // Findings from a scan of the content before the edit would land on the wrong lines.
+            scanLifecycle.cancel(changeEvent.document.uri.toString());
+            vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND, changeEvent.document.uri);
+            // A clean document changed because it was reloaded from disk, for example by a formatter that runs on save.
+            if (!changeEvent.document.isDirty) {
+                vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+            }
         }),
+        vscode.workspace.onDidDeleteFiles(deleteEvent => deleteEvent.files.forEach(uri => documentFindings.clear(uri))),
+        vscode.workspace.onDidRenameFiles(renameEvent => renameEvent.files.forEach(({ oldUri }) => documentFindings.clear(oldUri))),
         vscode.workspace.onDidSaveTextDocument(saveEvent => {
             if (!extensionReady) return;
             if ((vscode.window.activeTextEditor && saveEvent.uri.toString() !== vscode.window.activeTextEditor.document.uri.toString())
                 || !isSupportedFileType(saveEvent.fileName)) {
-                setReadyStatusBarItem(checkovInstallation?.actualVersion);
+                setReadyStatusBarItem();
                 return;
             }
             if ((saveEvent.fileName.endsWith('.checkov.yaml') || saveEvent.fileName.endsWith('.checkov.yml')) && shouldClearCacheUponConfigUpdate()) {
@@ -191,257 +224,155 @@ export function activate(context: vscode.ExtensionContext): void {
             if (!extensionReady) return;
             if (changeViewEvent && (!isSupportedFileType(changeViewEvent.document.fileName) || changeViewEvent.document.uri.toString().startsWith('output:'))) {
                 // Ignore unsupported files and output channels (e.g. output:exthost, output:ptyhost, etc.)
-                setReadyStatusBarItem(checkovInstallation?.actualVersion);
+                setReadyStatusBarItem();
 
                 // Cancel all ongoing scans when switching to unsupported files
-                cancelAllActiveScans();
+                scanLifecycle.cancelAll();
                 return;
             }
             if (changeViewEvent && changeViewEvent.document.isUntitled) {
                 // Ignore untitled documents (e.g. untitled:Untitled-1, etc.), as Checkov requires a file saved to disk.
                 // Update the status bar to ready
-                setReadyStatusBarItem(checkovInstallation?.actualVersion);
+                setReadyStatusBarItem();
                 return;
             }
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
         }),
         vscode.workspace.onDidChangeConfiguration(event => {
-            if (!extensionReady) return;
-            const cache_affected = [
-                'checkov-prismaless.skipFrameworks',
-                'checkov-prismaless.frameworks',
-                'checkov-prismaless.skipChecks'
-            ];
-            if (cache_affected.some(key => event.affectsConfiguration(key)) && shouldClearCacheUponConfigUpdate()) {
-                vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
-            }
-
-            const version_affected = [
-                'checkov-prismaless.checkovVersion',
-            ];
-            if (version_affected.some(key => event.affectsConfiguration(key)) && shouldClearCacheUponConfigUpdate()) {
+            const activeUri = vscode.window.activeTextEditor?.document.uri;
+            const effects = scanSettings.classifyChange({ affectsConfiguration: section => event.affectsConfiguration(section, activeUri) });
+            // Handled even when not ready, so correcting a version that failed to install retries the install.
+            // Installing rescans the active document once it finishes.
+            if (effects.has('installation')) {
                 vscode.commands.executeCommand(CLEAR_VERSION_CACHE);
             }
-
-            const display_affected = [
-                'checkov-prismaless.minimumSeverity',
-                'checkov-prismaless.skipPaths'
-            ];
-            if (display_affected.some(key => event.affectsConfiguration(key))
-                && vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor.document.fileName)) {
-                vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+            if (!extensionReady) return;
+            // Cached results for the old settings can never be served again, so this only frees the space they take.
+            if (effects.has('results') && shouldClearCacheUponConfigUpdate()) {
+                vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
+            }
+            if (!effects.has('installation') && effects.size > 0) {
+                rescanActiveDocument();
             }
         })
     );
 
-    // set code action provider
     context.subscriptions.push(
-        vscode.languages.registerCodeActionsProvider([{ pattern: '**/*' }],
-            fixCodeActionProvider(context.workspaceState), { providedCodeActionKinds: providedCodeActionKinds })
+        vscode.languages.registerCodeActionsProvider([{ pattern: '**/*' }], {
+            provideCodeActions: (document, _range, codeActionContext) => documentFindings.codeActions(document, codeActionContext.diagnostics)
+        }, { providedCodeActionKinds })
     );
 
     const startScan = async (fileUri?: vscode.Uri, useCache = false): Promise<void> => {
-        // Remove diagnostics before starting a new scan
-        vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
-
-        // Check if file is supported
-        if (!fileUri && vscode.window.activeTextEditor && !isSupportedFileType(vscode.window.activeTextEditor?.document.fileName, true))
+        const editor = vscode.window.activeTextEditor;
+        if (!fileUri && editor && !isSupportedFileType(editor.document.fileName, true))
             return;
 
-        if (!vscode.window.activeTextEditor) return;
+        const targetUri = fileUri ?? editor?.document.uri;
+        if (!targetUri) return;
 
-        const documentUri = fileUri?.toString() || vscode.window.activeTextEditor.document.uri.toString();
+        const uri = targetUri.toString();
+        latestRequestedUri = uri;
+        documentFindings.clear(targetUri);
+        if (!checkovInstallation) return;
+        const filePath = targetUri.fsPath;
+        const settings = scanSettings.resolve(filePath, checkovInstallation);
 
-        if (!fileUri) {
-            const skipPattern = findMatchingSkipPath(vscode.window.activeTextEditor.document);
+        if (!fileUri && editor) {
+            const skipPattern = findMatchingSkipPath(editor.document, settings.skipPaths);
             if (skipPattern) {
-                logger.info(`Not scanning ${vscode.window.activeTextEditor.document.fileName}: matches "${skipPattern}" in skipPaths`);
-                cancelScanForDocument(documentUri);
-                setSkippedStatusBarItem(checkovInstallation?.actualVersion, skipPattern);
+                logger.info(`Not scanning ${editor.document.fileName}: matches "${skipPattern}" in skipPaths`);
+                scanLifecycle.cancel(uri);
+                setSkippedStatusBarItem(skipPattern);
                 return;
             }
         }
 
-        // Cancel any existing scan for this document
-        cancelScanForDocument(documentUri);
-
-        // Create a new cancellation token source
-        const tokenSource = new vscode.CancellationTokenSource();
-        const scanTimeout = getScanTimeout();
-
-        // Automatically cancel the scan after timeout
-        setTimeout(() => {
-            if (!tokenSource.token.isCancellationRequested) {
-                logger.debug(`Cancelling scan for ${documentUri} due to timeout (${scanTimeout}s)`);
-                tokenSource.cancel();
-            }
-        }, scanTimeout * 1000);
-
-        // Add to active scans tracking
-        activeScanTokens.push({
-            uri: documentUri,
-            tokenSource: tokenSource
-        });
-
-        // Enforce maximum concurrent scans limit
-        if (activeScanTokens.length > MAX_CONCURRENT_SCANS) {
-            // Find and cancel oldest scan(s) until we're within limits
-            while (activeScanTokens.length > MAX_CONCURRENT_SCANS) {
-                const oldestScan = activeScanTokens.shift();
-                if (oldestScan) {
-                    logger.info(`Canceling scan of ${oldestScan.uri} due to concurrent scan limit`);
-                    oldestScan.tokenSource.cancel();
-                    oldestScan.tokenSource.dispose(); // Dispose to prevent memory leaks
-                }
-            }
-        }
-
-        const fileToScan = fileUri?.fsPath ?? vscode.window.activeTextEditor.document.fileName;
-        const configPaths = findConfigFiles(fileToScan, vscode.workspace.getWorkspaceFolder(vscode.Uri.file(fileToScan))?.uri.fsPath);
+        const { configPaths } = settings.checkov;
         let cacheKey: string;
         try {
-            cacheKey = getScanCacheKey(fileToScan, configPaths);
+            cacheKey = getScanCacheKey(filePath, settings.fingerprint);
         } catch (error) {
             // hashing fails for unsaved files or output channels
             logger.error('Error occurred while generating file hash', { error });
-            removeScanToken(documentUri);
+            scanLifecycle.cancel(uri);
+            return;
+        }
+        logger.debug(configPaths.length > 0 ? `Using Checkov config: ${configPaths.join(', ')}` : 'No Checkov config file found for this file');
+
+        if (isActiveDocument(uri)) {
+            setSyncingStatusBarItem('Checkov scanning');
+        }
+        const outcome = await scanLifecycle.scan({
+            uri,
+            filePath,
+            cacheKey,
+            useCache,
+            options: settings.checkov
+        });
+        await showScanOutcome(outcome, settings.minimumSeverity);
+    };
+
+    const isActiveDocument = (uri: string): boolean => vscode.window.activeTextEditor?.document.uri.toString() === uri;
+
+    const showUnsuccessfulOutcome = (outcome: Exclude<ScanOutcome, { kind: 'findings' }>): void => {
+        const active = isActiveDocument(outcome.uri);
+        switch (outcome.kind) {
+            case 'cancelled':
+                // A scan superseded by a newer one for the same document leaves the status to that scan.
+                if (active && (outcome.reason === 'limit' || (outcome.reason === 'superseded' && latestRequestedUri !== outcome.uri))) {
+                    setReadyStatusBarItem();
+                }
+                return;
+            case 'timedOut':
+                if (active) {
+                    setErrorStatusBarItem(`Checkov scan timed out after ${outcome.timeoutSeconds}s`);
+                }
+                return;
+            case 'error':
+                logger.error('Error occurred while running a checkov scan', { error: outcome.error });
+                if (active) {
+                    setErrorStatusBarItem();
+                }
+                if (!shouldDisableErrorMessage()) {
+                    showContactUsDetails(context.logUri, logFileName);
+                }
+        }
+    };
+
+    const showScanOutcome = async (outcome: ScanOutcome, minimumSeverity: string): Promise<void> => {
+        if (outcome.kind !== 'findings') {
+            showUnsuccessfulOutcome(outcome);
             return;
         }
 
-        if (useCache) {
-            const cachedResults = getCachedResults(context, cacheKey, vscode.window.activeTextEditor.document.fileName, logger);
-            if (cachedResults) {
-                logger.debug(`Found cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${cacheKey}`);
-                handleScanResults(cacheKey, vscode.window.activeTextEditor, context.workspaceState, cachedResults.results, logger);
-                removeScanToken(documentUri);
-                return;
-            } else {
-                logger.debug(`useCache is true, but did not find cached results for file: ${vscode.window.activeTextEditor.document.fileName}, hash: ${cacheKey}`);
-            }
-        }
-
-        const certPath = getPathToCert();
-        const useBcIds = getUseBcIds();
-        const debugLogs = getUseDebugLogs();
-        const noCertVerify = getNoCertVerify();
-        const externalChecksDir = getExternalChecksDir(vscode.Uri.file(fileToScan));
-        const skipFrameworks = getSkipFrameworks();
-        const skipChecks = getSkipChecks();
-        const frameworks = getFrameworks();
-
+        let document: vscode.TextDocument;
         try {
-            await runScan(vscode.window.activeTextEditor, {
-                certPath,
-                useBcIds,
-                debugLogs,
-                noCertVerify,
-                cancelToken: tokenSource.token,
-                externalChecksDir,
-                fileUri,
-                skipFrameworks,
-                frameworks,
-                skipChecks,
-                configPaths,
-                cacheKey
-            });
-        } finally {
-            // Always clean up the token when scan completes (success or failure)
-            removeScanToken(documentUri);
-        }
-    };
-
-    /**
-     * Cancels an existing scan for a specific document URI
-     */
-    const cancelScanForDocument = (documentUri: string): void => {
-        const index = activeScanTokens.findIndex(item => item.uri === documentUri);
-        if (index !== -1) {
-            const scan = activeScanTokens[index];
-            logger.debug(`Canceling existing scan for ${documentUri}`);
-            scan.tokenSource.cancel();
-            scan.tokenSource.dispose(); // Dispose to prevent memory leaks
-            activeScanTokens.splice(index, 1); // Remove from tracking array
-        }
-    };
-
-    /**
-     * Removes a scan token from the active scans tracking
-     */
-    const removeScanToken = (documentUri: string): void => {
-        const index = activeScanTokens.findIndex(item => item.uri === documentUri);
-        if (index !== -1) {
-            const scan = activeScanTokens[index];
-            // Only dispose if it hasn't been canceled already
-            if (!scan.tokenSource.token.isCancellationRequested) {
-                scan.tokenSource.dispose();
-            }
-            activeScanTokens.splice(index, 1);
-        }
-    };
-
-    /**
-     * Cancels all active scans
-     */
-    const cancelAllActiveScans = (): void => {
-        logger.debug(`Canceling all ${activeScanTokens.length} active scans`);
-
-        // Create a copy of the array since we'll be modifying it during iteration
-        const scansToCancel = [...activeScanTokens];
-
-        // Cancel and dispose each scan
-        for (const scan of scansToCancel) {
-            logger.debug(`Canceling scan for ${scan.uri}`);
-            scan.tokenSource.cancel();
-            scan.tokenSource.dispose();
-        }
-
-        // Clear the array
-        activeScanTokens.length = 0;
-    };
-
-    const runScan = debounce(async (
-        editor: vscode.TextEditor,
-        options: RunScanOptions
-    ) => {        logger.info('Starting to scan.');
-        try {
-            setSyncingStatusBarItem(checkovInstallation?.actualVersion, 'Checkov scanning');
-            const filePath = options.fileUri ? options.fileUri.fsPath : editor.document.fileName;
-            const configPaths = options.configPaths;
-            logger.debug(configPaths.length > 0 ? `Using Checkov config: ${configPaths.join(', ')}` : 'No Checkov config file found for this file');
-
-            if (!checkovInstallation) {
-                logger.error('Checkov is not installed, aborting scan.');
-                return;
-            }
-
-            const checkovResponse = await runCheckovScan(logger, checkovInstallation, extensionVersion, filePath, options.certPath, options.useBcIds, options.debugLogs, options.noCertVerify, options.cancelToken, configPaths, options.externalChecksDir, options.skipFrameworks, options.frameworks, options.skipChecks, getDockerSelinuxMode());
-            handleScanResults(options.cacheKey, editor, context.workspaceState, checkovResponse.results.failedChecks, logger);
+            document = await vscode.workspace.openTextDocument(vscode.Uri.parse(outcome.uri));
         } catch (error) {
-            if (options.cancelToken.isCancellationRequested) {
-                return;
-            }
-
-            setErrorStatusBarItem(checkovInstallation?.actualVersion);
-            logger.error('Error occurred while running a checkov scan', { error });
-            if (!shouldDisableErrorMessage()) {
-                showContactUsDetails(context.logUri, logFileName);
-            }
+            logger.warn(`Could not open ${outcome.uri} to show its findings`, { error });
+            return;
         }
-    }, 100, {});
 
-    const handleScanResults = (cacheKey: string, editor: vscode.TextEditor, state: vscode.Memento, checkovFails: FailedCheckovCheck[], logger: Logger) => {
-        saveCheckovResult(context.workspaceState, checkovFails);
-        const minimumSeverity = getMinimumSeverity();
-        const hidden = applyDiagnostics(editor.document, diagnostics, checkovFails, logger, minimumSeverity);
-        logger.debug(`Showing ${checkovFails.length - hidden} of ${checkovFails.length} findings (minimum severity: ${minimumSeverity})`);
+        const active = isActiveDocument(outcome.uri);
+        // Checkov scans the file on disk, so its findings would land on the wrong lines of unsaved edits.
+        if (document.isDirty) {
+            logger.debug(`Not showing findings for ${outcome.uri}, which has unsaved changes`);
+            if (active) setReadyStatusBarItem();
+            return;
+        }
+        const total = outcome.findings.length;
+        const { hidden } = documentFindings.publish(document, outcome.findings, minimumSeverity);
+        logger.debug(`Showing ${total - hidden} of ${total} findings (minimum severity: ${minimumSeverity})`);
+        if (!active) return;
+
         const hiddenMessage = hidden > 0 ? `${hidden} finding${hidden === 1 ? '' : 's'} below ${minimumSeverity} hidden by checkov-prismaless.minimumSeverity` : undefined;
-        if (checkovFails.length > hidden) {
-            setErrorStatusBarItem(checkovInstallation?.actualVersion, hiddenMessage);
+        if (total > hidden) {
+            setErrorStatusBarItem(hiddenMessage);
         } else if (hiddenMessage) {
-            setFilteredStatusBarItem(checkovInstallation?.actualVersion, hiddenMessage);
+            setFilteredStatusBarItem(hiddenMessage);
         } else {
-            setPassedStatusBarItem(checkovInstallation?.actualVersion);
+            setPassedStatusBarItem();
         }
-        saveCachedResults(context, cacheKey, editor.document.fileName, checkovFails, logger);
     };
 }

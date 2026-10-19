@@ -1,0 +1,282 @@
+import * as assert from 'assert';
+import winston from 'winston';
+import { FailedCheckovCheck } from '../../checkov/models';
+import { createScanLifecycle, ScanLimits, ScanRequest } from '../../scanLifecycle';
+import { InMemoryMemento, ManualClock, settle } from './fakes';
+
+type Options = { label: string };
+
+type Invocation = {
+    filePath: string,
+    options: Options,
+    signal: AbortSignal,
+    resolve: (findings: FailedCheckovCheck[]) => void,
+    reject: (error: unknown) => void
+};
+
+class FakeCheckov {
+    readonly invocations: Invocation[] = [];
+
+    readonly invoke = (filePath: string, options: Options, signal: AbortSignal): Promise<FailedCheckovCheck[]> =>
+        new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => reject('Cancel invoked'));
+            this.invocations.push({ filePath, options, signal, resolve, reject });
+        });
+}
+
+const finding = (checkId: string): FailedCheckovCheck => ({
+    checkId,
+    checkName: `${checkId} name`,
+    fileLineRange: [1, 2],
+    resource: 'aws_s3_bucket.example'
+});
+
+const request = (uri: string, overrides: Partial<ScanRequest<Options>> = {}): ScanRequest<Options> => ({
+    uri,
+    filePath: uri.replace('file://', ''),
+    cacheKey: `${uri}-hash`,
+    useCache: true,
+    options: { label: uri },
+    ...overrides
+});
+
+const setup = (limits: ScanLimits = { timeoutSeconds: 60, maximumConcurrentScans: 2 }) => {
+    const clock = new ManualClock();
+    const checkov = new FakeCheckov();
+    const cache = new InMemoryMemento();
+    const currentLimits = { ...limits };
+    const lifecycle = createScanLifecycle<Options>({
+        invoke: checkov.invoke,
+        cache,
+        limits: () => currentLimits,
+        clock,
+        logger: winston.createLogger({ silent: true })
+    });
+    return { clock, checkov, cache, limits: currentLimits, lifecycle };
+};
+
+suite('scan lifecycle', () => {
+    test('runs Checkov after the debounce and returns the findings for the requested document', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const outcome = lifecycle.scan(request('file:///repo/main.tf'));
+        await settle();
+        assert.strictEqual(checkov.invocations.length, 0);
+
+        await clock.advance(100);
+        assert.strictEqual(checkov.invocations.length, 1);
+        assert.strictEqual(checkov.invocations[0].filePath, '/repo/main.tf');
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+
+        assert.deepStrictEqual(await outcome, {
+            kind: 'findings',
+            uri: 'file:///repo/main.tf',
+            findings: [finding('CKV_AWS_1')]
+        });
+    });
+
+    test('a request for changed content cancels the scan still running', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const second = lifecycle.scan(request('file:///repo/main.tf', { cacheKey: 'edited-hash' }));
+
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'superseded' });
+        assert.ok(checkov.invocations[0].signal.aborted);
+
+        await clock.advance(100);
+        checkov.invocations[1].resolve([]);
+        assert.strictEqual((await second).kind, 'findings');
+    });
+
+    test('a request for the same content joins the scan still running', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const second = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+
+        const expected = { kind: 'findings', uri: 'file:///repo/main.tf', findings: [finding('CKV_AWS_1')] };
+        assert.deepStrictEqual(await first, expected);
+        assert.deepStrictEqual(await second, expected);
+        assert.strictEqual(checkov.invocations.length, 1);
+    });
+
+    test('a forced request restarts the scan still running for the same content', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/main.tf', { useCache: false }));
+        await clock.advance(100);
+
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'superseded' });
+        assert.strictEqual(checkov.invocations.length, 2);
+    });
+
+    test('a request that joined a scan gets its timed out outcome', async () => {
+        const { clock, lifecycle } = setup({ timeoutSeconds: 30, maximumConcurrentScans: 2 });
+
+        lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const joined = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(30_000);
+
+        assert.deepStrictEqual(await joined, { kind: 'timedOut', uri: 'file:///repo/main.tf', timeoutSeconds: 30 });
+    });
+
+    test('rapid requests for one document run Checkov once with the latest request', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf', { options: { label: 'first' } }));
+        await clock.advance(50);
+        lifecycle.scan(request('file:///repo/main.tf', { options: { label: 'latest' } }));
+        await clock.advance(100);
+
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'superseded' });
+        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.options.label), ['latest']);
+    });
+
+    test('a request cancels other documents\' scans still waiting on the debounce, so only the last runs', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/a.tf'));
+        const second = lifecycle.scan(request('file:///repo/b.tf'));
+        lifecycle.scan(request('file:///repo/c.tf'));
+        await clock.advance(100);
+
+        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.filePath), ['/repo/c.tf']);
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/a.tf', reason: 'superseded' });
+        assert.deepStrictEqual(await second, { kind: 'cancelled', uri: 'file:///repo/b.tf', reason: 'superseded' });
+    });
+
+    test('a request leaves other documents\' running scans alone', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const running = lifecycle.scan(request('file:///repo/a.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/b.tf'));
+        await clock.advance(100);
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+
+        assert.deepStrictEqual(await running, { kind: 'findings', uri: 'file:///repo/a.tf', findings: [finding('CKV_AWS_1')] });
+        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.filePath), ['/repo/a.tf', '/repo/b.tf']);
+    });
+
+    test('the concurrency cap cancels the oldest running scan, using the cap at the time the scan starts', async () => {
+        const { clock, checkov, limits, lifecycle } = setup({ timeoutSeconds: 60, maximumConcurrentScans: 2 });
+
+        const oldest = lifecycle.scan(request('file:///repo/a.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/b.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/c.tf'));
+        await settle();
+        assert.ok(!checkov.invocations[0].signal.aborted, 'a scan still waiting on the debounce does not count towards the cap');
+
+        await clock.advance(100);
+        assert.deepStrictEqual(await oldest, { kind: 'cancelled', uri: 'file:///repo/a.tf', reason: 'limit' });
+
+        limits.maximumConcurrentScans = 1;
+        lifecycle.scan(request('file:///repo/d.tf'));
+        await clock.advance(100);
+
+        assert.deepStrictEqual(checkov.invocations.map(invocation => [invocation.filePath, invocation.signal.aborted]), [
+            ['/repo/a.tf', true],
+            ['/repo/b.tf', true],
+            ['/repo/c.tf', true],
+            ['/repo/d.tf', false]
+        ]);
+    });
+
+    test('a scan that runs past the timeout is stopped and reported as timed out', async () => {
+        const { clock, checkov, lifecycle } = setup({ timeoutSeconds: 30, maximumConcurrentScans: 2 });
+
+        const outcome = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100 + 29_999);
+        assert.ok(!checkov.invocations[0].signal.aborted);
+
+        await clock.advance(1);
+        assert.ok(checkov.invocations[0].signal.aborted);
+        assert.deepStrictEqual(await outcome, { kind: 'timedOut', uri: 'file:///repo/main.tf', timeoutSeconds: 30 });
+    });
+
+    test('an unchanged file is answered from the cache without running Checkov', async () => {
+        const { clock, checkov, lifecycle } = setup();
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+        await first;
+
+        const cached = await lifecycle.scan(request('file:///repo/main.tf'));
+
+        assert.deepStrictEqual(cached, {
+            kind: 'findings',
+            uri: 'file:///repo/main.tf',
+            findings: [finding('CKV_AWS_1')]
+        });
+        assert.strictEqual(checkov.invocations.length, 1);
+    });
+
+    test('a changed file, a forced scan or a new day runs Checkov again', async () => {
+        const { clock, checkov, lifecycle } = setup();
+        const scanAndResolve = async (overrides: Partial<ScanRequest<Options>>) => {
+            const outcome = lifecycle.scan(request('file:///repo/main.tf', overrides));
+            await clock.advance(100);
+            checkov.invocations[checkov.invocations.length - 1]?.resolve([]);
+            return outcome;
+        };
+
+        await scanAndResolve({});
+        assert.strictEqual((await scanAndResolve({ cacheKey: 'changed-hash' })).kind, 'findings');
+        assert.strictEqual(checkov.invocations.length, 2);
+
+        await scanAndResolve({ useCache: false });
+        assert.strictEqual(checkov.invocations.length, 3);
+
+        await clock.advance(24 * 60 * 60 * 1000);
+        await scanAndResolve({});
+        assert.strictEqual(checkov.invocations.length, 4);
+    });
+
+    test('a cancelled scan does not cache findings that arrive late', async () => {
+        const { clock, checkov, lifecycle } = setup();
+        lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        lifecycle.cancel('file:///repo/main.tf');
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+        await settle();
+
+        lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        assert.strictEqual(checkov.invocations.length, 2);
+    });
+
+    test('a failed Checkov invocation is reported as an error', async () => {
+        const { clock, checkov, lifecycle } = setup();
+        const outcome = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const error = new Error('Checkov exited with code 2');
+        checkov.invocations[0].reject(error);
+
+        assert.deepStrictEqual(await outcome, { kind: 'error', uri: 'file:///repo/main.tf', error });
+    });
+
+    test('cancelling all scans stops pending and running scans', async () => {
+        const { clock, checkov, lifecycle } = setup();
+        const running = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const pending = lifecycle.scan(request('file:///repo/variables.tf'));
+
+        lifecycle.cancelAll();
+        await clock.advance(100);
+
+        assert.deepStrictEqual(await running, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'requested' });
+        assert.deepStrictEqual(await pending, { kind: 'cancelled', uri: 'file:///repo/variables.tf', reason: 'requested' });
+        assert.ok(checkov.invocations[0].signal.aborted);
+        assert.strictEqual(checkov.invocations.length, 1);
+    });
+});

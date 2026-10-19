@@ -4,6 +4,41 @@ All notable changes to the "checkov" extension will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
+## [1.2.0] - 2026-10-19
+
+### Added
+
+- Severity mappings are bundled with the extension, so findings show a severity on a first run without network access. Each release ships the latest mappings.
+- Each folder of a multi-root workspace can set its own `frameworks`, `skipFrameworks`, `skipChecks` and `minimumSeverity`.
+- `useBridgecrewIDs`, `certificate` and `noCertVerify` now appear in the Settings UI. They already worked when set in `settings.json`.
+- Changing `checkovVersion` reinstalls Checkov. There is no need to run "Install or Update" by hand.
+
+### Changed
+
+- Cached results are keyed on everything that produced them: the file, the settings that affect results, the Checkov config files, the files in `externalChecksDir` and the Checkov installation. Changing any of them always causes a fresh scan. `clearCacheUponConfigUpdate` now only frees the space taken by old results.
+- A check missing from the severity mappings shows the severity Checkov reported, instead of none.
+- Changing `minimumSeverity` redraws findings from the cache instead of running Checkov again.
+- Moving quickly between files only scans the file you stop on. Going back to a file that is still being scanned carries on with that scan instead of restarting it.
+- Findings are not shown on a file with unsaved changes, because Checkov scans the saved file and the lines would not match. Save the file to scan it.
+- "Refresh Severity Mappings" always downloads the mappings again, and only reports an update when they changed.
+- Skip comments match the indentation of the block they go into.
+- Setting titles and descriptions have been rewritten to be consistent and up to date.
+
+### Fixed
+
+- "Checkov severity mappings updated" was shown every hour even when nothing had changed.
+- Changing `useBridgecrewIDs`, `externalChecksDir`, `certificate` or `noCertVerify` kept serving results from before the change.
+- After a Checkov upgrade, another workspace could keep serving results from the old version.
+- A cancelled Docker scan could keep running in the background.
+- Scans failed when Checkov printed log lines before its JSON output or a notice after it.
+- Editing a file while it was being scanned could put findings on the wrong lines.
+- A quick fix applied from the Problems panel cleared the findings of the active file instead of the file that was fixed.
+- Two identical findings in one file shared a single fix.
+- Quick fixes failed for a finding about the whole file.
+- "Learn more" was offered for checks whose guideline is not a web link, and opened nothing.
+- Correcting an invalid `checkovVersion` did nothing until Checkov was reinstalled by hand, and a version change made during an install was lost.
+- The status bar could stay on "scanning" after a scan was cancelled.
+
 ## [1.1.0] - 2026-10-12
 
 ### Security

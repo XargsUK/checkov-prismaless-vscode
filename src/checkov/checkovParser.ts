@@ -8,7 +8,7 @@ interface SuccessResponseRaw {
 
 const resultParserSCA = ({ useBcIds = false }: ParserOptions) => (rawCheck: FailedCheckovCheckRaw): FailedCheckovCheck => ({
     checkId: (useBcIds && rawCheck.bc_check_id) || rawCheck.check_id,
-    checkName: `${(useBcIds && rawCheck.bc_check_id) || rawCheck.check_id} ${rawCheck.code_block ? rawCheck.code_block[0][1] : ''} ${rawCheck.severity} `,
+    checkName: `${(useBcIds && rawCheck.bc_check_id) || rawCheck.check_id} ${rawCheck.code_block ? rawCheck.code_block[0][1] : ''}`.trim(),
     fileLineRange: rawCheck.file_line_range,
     resource: rawCheck.resource,
     guideline: rawCheck.guideline || rawCheck.short_description,
