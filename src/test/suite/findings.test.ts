@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { FailedCheckovCheck } from '../../checkov/models';
-import { OPEN_EXTERNAL_COMMAND } from '../../commands';
+import { OPEN_EXTERNAL_COMMAND, REMOVE_DIAGNOSTICS_COMMAND } from '../../commands';
 import { createFindings, Findings } from '../../findings';
 
 const bucket = (name: string) => `resource "aws_s3_bucket" "${name}" {\n  bucket = "${name}"\n}\n`;
@@ -95,6 +95,21 @@ suite('findings for a document', () => {
         assert.ok(!actions.some(action => action.title.startsWith('Apply fix')));
         assert.deepStrictEqual(editsFor(actions.find(action => action.title.startsWith('Generate skip comment')), document),
             [{ start: [1, 0], end: [1, 0], newText: '  # checkov:skip=CKV_AWS_18: ADD REASON\n' }]);
+    });
+
+    test('applying a fix or skip comment clears the findings of the document it was applied to', async () => {
+        const document = await openDocument(bucket('a'));
+        documentFindings.publish(document, [finding({ fixedDefinition: 'fixed\n' })], 'None');
+
+        const [diagnostic] = collection.get(document.uri) ?? [];
+        const actions = (await codeActionsFor(document, diagnostic))
+            .filter(action => action.title.startsWith('Apply fix') || action.title.startsWith('Generate skip comment'));
+
+        assert.strictEqual(actions.length, 2);
+        for (const action of actions) {
+            assert.strictEqual(action.command?.command, REMOVE_DIAGNOSTICS_COMMAND, action.title);
+            assert.strictEqual(action.command?.arguments?.[0]?.toString(), document.uri.toString(), action.title);
+        }
     });
 
     test('the skip comment matches the indentation of the block it goes into', async () => {

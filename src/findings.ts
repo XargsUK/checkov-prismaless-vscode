@@ -92,7 +92,7 @@ const codeActionsFor = (document: vscode.TextDocument, diagnostic: vscode.Diagno
             diagnostics: [diagnostic],
             isPreferred: true,
             edit: fixEdit,
-            command: { title: 'Apply fix', command: REMOVE_DIAGNOSTICS_COMMAND }
+            command: { title: 'Apply fix', command: REMOVE_DIAGNOSTICS_COMMAND, arguments: [document.uri] }
         });
     }
 
@@ -108,7 +108,7 @@ const codeActionsFor = (document: vscode.TextDocument, diagnostic: vscode.Diagno
             diagnostics: [diagnostic],
             isPreferred: false,
             edit: skipEdit,
-            command: { title: 'Generate skip comment', command: REMOVE_DIAGNOSTICS_COMMAND }
+            command: { title: 'Generate skip comment', command: REMOVE_DIAGNOSTICS_COMMAND, arguments: [document.uri] }
         });
     }
 

@@ -29,6 +29,8 @@ export function activate(context: vscode.ExtensionContext): void {
     logger.info('Starting Checkov Extension.', { extensionVersion, vscodeVersion: vscode.version });
 
     let extensionReady = false;
+    let installRunning = false;
+    let reinstallWanted = false;
     const scanSettings = createScanSettings({ reader: vscodeSettingsReader, logger });
 
     const rescanActiveDocument = (): void => {
@@ -83,6 +85,12 @@ export function activate(context: vscode.ExtensionContext): void {
     // Set commands
     context.subscriptions.push(
         vscode.commands.registerCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND, async () => {
+            // A request made during an install, such as a checkovVersion change, runs once that install finishes.
+            if (installRunning) {
+                reinstallWanted = true;
+                return;
+            }
+            installRunning = true;
             try {
                 extensionReady = false;
                 setSyncingStatusBarItem('Updating Checkov');
@@ -102,13 +110,18 @@ export function activate(context: vscode.ExtensionContext): void {
                 setStatusBarVersion(checkovInstallation.displayVersion);
                 setReadyStatusBarItem();
                 extensionReady = true;
-                if (vscode.window.activeTextEditor && isSupportedFileType(vscode.window.activeTextEditor?.document.fileName))
-                    vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+                rescanActiveDocument();
             } catch (error) {
                 setErrorStatusBarItem();
                 logger.error('Error occurred while preparing Checkov. Verify your settings, or try to reload vscode.', { error });
                 if (!shouldDisableErrorMessage()) {
                     showContactUsDetails(context.logUri, logFileName);
+                }
+            } finally {
+                installRunning = false;
+                if (reinstallWanted) {
+                    reinstallWanted = false;
+                    vscode.commands.executeCommand(INSTALL_OR_UPDATE_CHECKOV_COMMAND);
                 }
             }
         }),
@@ -120,10 +133,13 @@ export function activate(context: vscode.ExtensionContext): void {
             }
             await startScan(fileUri, true);
         }),
-        vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, () => {
-            if (vscode.window.activeTextEditor) {
+        // Quick fixes pass the document they changed, which need not be the active one.
+        vscode.commands.registerCommand(REMOVE_DIAGNOSTICS_COMMAND, (uri?: vscode.Uri) => {
+            const target = uri ?? vscode.window.activeTextEditor?.document.uri;
+            if (!target) return;
+            documentFindings.clear(target);
+            if (isActiveDocument(target.toString())) {
                 setReadyStatusBarItem();
-                documentFindings.clear(vscode.window.activeTextEditor.document.uri);
             }
         }),
         vscode.commands.registerCommand(OPEN_CONFIGURATION_COMMAND, () => {
@@ -172,11 +188,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(changeEvent => {
-            if (!extensionReady) return;
+            // VS Code also sends an event with no content changes when only the dirty state changes, for example on save.
+            if (!extensionReady || changeEvent.contentChanges.length === 0) return;
             if ((vscode.window.activeTextEditor &&
                 changeEvent.document.uri.toString() !== vscode.window.activeTextEditor.document.uri.toString())
                 || !isSupportedFileType(changeEvent.document.fileName))
                 return;
+            // Findings from a scan of the content before the edit would land on the wrong lines.
+            scanLifecycle.cancel(changeEvent.document.uri.toString());
             vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
         }),
         vscode.workspace.onDidDeleteFiles(deleteEvent => deleteEvent.files.forEach(uri => documentFindings.clear(uri))),
@@ -212,17 +231,19 @@ export function activate(context: vscode.ExtensionContext): void {
             vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
         }),
         vscode.workspace.onDidChangeConfiguration(event => {
-            if (!extensionReady) return;
             const activeUri = vscode.window.activeTextEditor?.document.uri;
             const effects = scanSettings.classifyChange({ affectsConfiguration: section => event.affectsConfiguration(section, activeUri) });
+            // Handled even when not ready, so correcting a version that failed to install retries the install.
+            // Installing rescans the active document once it finishes.
+            if (effects.has('installation')) {
+                vscode.commands.executeCommand(CLEAR_VERSION_CACHE);
+            }
+            if (!extensionReady) return;
             // Cached results for the old settings can never be served again, so this only frees the space they take.
             if (effects.has('results') && shouldClearCacheUponConfigUpdate()) {
                 vscode.commands.executeCommand(CLEAR_RESULTS_CACHE);
             }
-            if (effects.has('installation')) {
-                // Installing rescans the active document once it finishes.
-                vscode.commands.executeCommand(CLEAR_VERSION_CACHE);
-            } else if (effects.size > 0) {
+            if (!effects.has('installation') && effects.size > 0) {
                 rescanActiveDocument();
             }
         })
