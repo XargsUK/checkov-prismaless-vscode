@@ -45,6 +45,8 @@ const debounceMs = 100;
 
 interface ActiveScan {
     uri: string;
+    cacheKey: string;
+    outcome: Promise<ScanOutcome>;
     controller: AbortController;
     started: boolean;
     timer?: unknown;
@@ -112,32 +114,45 @@ export const createScanLifecycle = <TOptions>({ invoke, cache, limits, logger, c
     };
 
     const scan = (request: ScanRequest<TOptions>): Promise<ScanOutcome> => {
-        cancelScansFor(request.uri, 'superseded');
         cancelPendingScansOfOtherDocuments(request.uri);
+
+        // Restarting a scan of unchanged content would only delay its results, unless the request forces a fresh scan.
+        const running = request.useCache
+            ? active.find(item => item.uri === request.uri && item.started && item.cacheKey === request.cacheKey)
+            : undefined;
+        if (running) {
+            logger.debug(`Joining the running scan for ${request.uri}`);
+            return running.outcome;
+        }
+        cancelScansFor(request.uri, 'superseded');
 
         const cached = request.useCache ? getCachedResults(cache, request.cacheKey, request.filePath, clock.now(), logger) : undefined;
         if (cached) {
             return Promise.resolve({ kind: 'findings', uri: request.uri, findings: cached });
         }
 
-        return new Promise(resolve => {
-            let finished = false;
-            const entry: ActiveScan = {
-                uri: request.uri,
-                controller: new AbortController(),
-                started: false,
-                finish: outcome => {
-                    if (finished) return;
-                    finished = true;
-                    clock.clearTimeout(entry.timer);
-                    const index = active.indexOf(entry);
-                    if (index !== -1) active.splice(index, 1);
-                    resolve(outcome);
-                }
-            };
-            active.push(entry);
-            entry.timer = clock.setTimeout(() => startInvocation(entry, request), debounceMs);
-        });
+        let resolveOutcome!: (outcome: ScanOutcome) => void;
+        let finished = false;
+        const entry: ActiveScan = {
+            uri: request.uri,
+            cacheKey: request.cacheKey,
+            outcome: new Promise(resolve => {
+                resolveOutcome = resolve;
+            }),
+            controller: new AbortController(),
+            started: false,
+            finish: outcome => {
+                if (finished) return;
+                finished = true;
+                clock.clearTimeout(entry.timer);
+                const index = active.indexOf(entry);
+                if (index !== -1) active.splice(index, 1);
+                resolveOutcome(outcome);
+            }
+        };
+        active.push(entry);
+        entry.timer = clock.setTimeout(() => startInvocation(entry, request), debounceMs);
+        return entry.outcome;
     };
 
     return { scan, cancel: uri => cancelScansFor(uri, 'requested'), cancelAll };

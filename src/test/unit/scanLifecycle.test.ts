@@ -75,12 +75,12 @@ suite('scan lifecycle', () => {
         });
     });
 
-    test('a new request for the same document cancels the scan still running', async () => {
+    test('a request for changed content cancels the scan still running', async () => {
         const { clock, checkov, lifecycle } = setup();
 
         const first = lifecycle.scan(request('file:///repo/main.tf'));
         await clock.advance(100);
-        const second = lifecycle.scan(request('file:///repo/main.tf'));
+        const second = lifecycle.scan(request('file:///repo/main.tf', { cacheKey: 'edited-hash' }));
 
         assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'superseded' });
         assert.ok(checkov.invocations[0].signal.aborted);
@@ -88,6 +88,44 @@ suite('scan lifecycle', () => {
         await clock.advance(100);
         checkov.invocations[1].resolve([]);
         assert.strictEqual((await second).kind, 'findings');
+    });
+
+    test('a request for the same content joins the scan still running', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const second = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+
+        const expected = { kind: 'findings', uri: 'file:///repo/main.tf', findings: [finding('CKV_AWS_1')] };
+        assert.deepStrictEqual(await first, expected);
+        assert.deepStrictEqual(await second, expected);
+        assert.strictEqual(checkov.invocations.length, 1);
+    });
+
+    test('a forced request restarts the scan still running for the same content', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const first = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/main.tf', { useCache: false }));
+        await clock.advance(100);
+
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/main.tf', reason: 'superseded' });
+        assert.strictEqual(checkov.invocations.length, 2);
+    });
+
+    test('a request that joined a scan gets its timed out outcome', async () => {
+        const { clock, lifecycle } = setup({ timeoutSeconds: 30, maximumConcurrentScans: 2 });
+
+        lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(100);
+        const joined = lifecycle.scan(request('file:///repo/main.tf'));
+        await clock.advance(30_000);
+
+        assert.deepStrictEqual(await joined, { kind: 'timedOut', uri: 'file:///repo/main.tf', timeoutSeconds: 30 });
     });
 
     test('rapid requests for one document run Checkov once with the latest request', async () => {
