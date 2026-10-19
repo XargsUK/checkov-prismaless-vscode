@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const severityMappings = createSeverityMappings({
         source: githubMappingSource(logger),
         cache: context.globalState,
-        bundledMappings: readBundledMappings(vscode.Uri.joinPath(context.extensionUri, 'resources', 'checkov_severity_mappings.json').fsPath, logger),
+        loadBundledMappings: () => readBundledMappings(vscode.Uri.joinPath(context.extensionUri, 'resources', 'checkov_severity_mappings.json').fsPath, logger),
         logger,
         onMappingsChanged: change => {
             rescanActiveDocument();
@@ -156,7 +156,7 @@ export function activate(context: vscode.ExtensionContext): void {
             try {
                 logger.info('Manually refreshing severity mappings from GitHub');
                 vscode.window.showInformationMessage('Refreshing severity mappings...');
-                const result = await severityMappings.refresh();
+                const result = await severityMappings.refresh({ force: true });
                 if (result === 'updated') {
                     rescanActiveDocument();
                 }

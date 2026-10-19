@@ -23,12 +23,12 @@ class FakeMappingSource implements MappingSource {
     }
 }
 
-const setup = (cache = new InMemoryMemento(), source = new FakeMappingSource(), clock = new ManualClock(), bundledMappings?: unknown) => {
+const setup = (cache = new InMemoryMemento(), source = new FakeMappingSource(), clock = new ManualClock(), loadBundledMappings?: () => unknown) => {
     const changes: string[] = [];
     const severityMappings = createSeverityMappings({
         source,
         cache,
-        bundledMappings,
+        loadBundledMappings,
         clock,
         logger: winston.createLogger({ silent: true }),
         onMappingsChanged: change => changes.push(change)
@@ -138,7 +138,7 @@ suite('severity mappings', () => {
     test('a first run without network uses the mappings bundled with the extension', async () => {
         const offline = new FakeMappingSource();
         offline.offline = true;
-        const { severityMappings, changes } = setup(new InMemoryMemento(), offline, new ManualClock(), { mappings: { CKV_AWS_5: 'HIGH' } });
+        const { severityMappings, changes } = setup(new InMemoryMemento(), offline, new ManualClock(), () => ({ mappings: { CKV_AWS_5: 'HIGH' } }));
         await settle();
 
         assert.strictEqual(severityMappings.resolve('CKV_AWS_5', undefined), 'HIGH');
@@ -147,7 +147,7 @@ suite('severity mappings', () => {
     });
 
     test('downloaded mappings replace the bundled ones and count as the first load', async () => {
-        const { severityMappings, changes } = setup(new InMemoryMemento(), new FakeMappingSource(), new ManualClock(), { mappings: { CKV_AWS_1: 'INFO' } });
+        const { severityMappings, changes } = setup(new InMemoryMemento(), new FakeMappingSource(), new ManualClock(), () => ({ mappings: { CKV_AWS_1: 'INFO' } }));
         await settle();
 
         assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'HIGH');
@@ -162,7 +162,7 @@ suite('severity mappings', () => {
 
         const offline = new FakeMappingSource();
         offline.offline = true;
-        const { severityMappings } = setup(cache, offline, clock, { mappings: { CKV_AWS_1: 'INFO' } });
+        const { severityMappings } = setup(cache, offline, clock, () => ({ mappings: { CKV_AWS_1: 'INFO' } }));
 
         assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'HIGH');
     });
@@ -170,7 +170,7 @@ suite('severity mappings', () => {
     test('a bundled file that is not valid is ignored', async () => {
         const offline = new FakeMappingSource();
         offline.offline = true;
-        const { severityMappings } = setup(new InMemoryMemento(), offline, new ManualClock(), { mappings: {} });
+        const { severityMappings } = setup(new InMemoryMemento(), offline, new ManualClock(), () => ({ mappings: {} }));
 
         assert.strictEqual(severityMappings.resolve('CKV_AWS_1', 'LOW'), 'LOW');
     });
@@ -203,6 +203,55 @@ suite('severity mappings', () => {
         assert.strictEqual(severityMappings.resolve('CKV_AWS_3', undefined), 'CRITICAL');
         assert.strictEqual(cache.get('checkov_severity_mappings'), undefined);
         assert.strictEqual(offline.releaseChecks, 1);
+    });
+
+    test('a forced refresh downloads the same release again and replaces mappings that differ', async () => {
+        const { severityMappings, source } = setup();
+        await settle();
+        source.file = { mappings: { CKV_AWS_1: 'CRITICAL' } };
+
+        assert.strictEqual(await severityMappings.refresh({ force: true }), 'updated');
+        assert.strictEqual(source.mappingDownloads, 2);
+        assert.strictEqual(severityMappings.resolve('CKV_AWS_1', undefined), 'CRITICAL');
+    });
+
+    test('a forced refresh that downloads identical mappings reports no change', async () => {
+        const { severityMappings, source } = setup();
+        await settle();
+
+        assert.strictEqual(await severityMappings.refresh({ force: true }), 'unchanged');
+        assert.strictEqual(source.mappingDownloads, 2);
+    });
+
+    test('a forced refresh during an unforced one still downloads', async () => {
+        const { severityMappings, source } = setup();
+        await settle();
+        source.file = { mappings: { CKV_AWS_1: 'CRITICAL' } };
+
+        const [unforced, forced] = await Promise.all([severityMappings.refresh(), severityMappings.refresh({ force: true })]);
+
+        assert.deepStrictEqual([unforced, forced], ['unchanged', 'updated']);
+        assert.strictEqual(source.mappingDownloads, 2);
+    });
+
+    test('the bundled mappings are only read when nothing is cached', async () => {
+        const cache = new InMemoryMemento();
+        const clock = new ManualClock();
+        let reads = 0;
+        const load = () => {
+            reads++;
+            return { mappings: { CKV_AWS_1: 'INFO' } };
+        };
+        setup(cache, new FakeMappingSource(), clock, load).severityMappings.dispose();
+        await settle();
+        assert.strictEqual(reads, 1);
+
+        setup(cache, new FakeMappingSource(), clock, load).severityMappings.dispose();
+        const legacy = new InMemoryMemento();
+        await legacy.update('checkov_severity_mappings', { data: { mappings: { CKV_AWS_3: 'CRITICAL' } } });
+        setup(legacy, new FakeMappingSource(), clock, load).severityMappings.dispose();
+
+        assert.strictEqual(reads, 1);
     });
 
     test('overlapping refreshes share one download', async () => {

@@ -11,16 +11,21 @@ export interface MappingSource {
 export type RefreshResult = 'updated' | 'unchanged';
 export type MappingsChange = 'loaded' | 'updated';
 
+export interface RefreshOptions {
+    // Downloads the mappings even when the cached release version matches.
+    force?: boolean;
+}
+
 export interface SeverityMappings {
     resolve(checkId: string, reported: string | undefined): string;
-    refresh(): Promise<RefreshResult>;
+    refresh(options?: RefreshOptions): Promise<RefreshResult>;
     dispose(): void;
 }
 
 export interface SeverityMappingsDependencies {
     source: MappingSource;
     cache: Memento;
-    bundledMappings?: unknown;
+    loadBundledMappings?: () => unknown;
     logger: Logger;
     onMappingsChanged: (change: MappingsChange) => void;
     clock?: Clock;
@@ -97,32 +102,46 @@ const readLegacyCache = (cache: Memento, logger: Logger): CachedMappings | undef
     return unreleasedMappings(legacy.data, 'previously cached', logger);
 };
 
-export const createSeverityMappings = ({ source, cache, bundledMappings, logger, onMappingsChanged, clock = systemClock }: SeverityMappingsDependencies): SeverityMappings => {
-    let current = cache.get<CachedMappings>(cacheKey) ?? readLegacyCache(cache, logger) ?? unreleasedMappings(bundledMappings, 'bundled', logger);
-    let inFlight: Promise<RefreshResult> | undefined;
+const sameMappings = (a: Record<string, string>, b: Record<string, string>): boolean => {
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(key => a[key] === b[key]);
+};
+
+export const createSeverityMappings = ({ source, cache, loadBundledMappings, logger, onMappingsChanged, clock = systemClock }: SeverityMappingsDependencies): SeverityMappings => {
+    let current = cache.get<CachedMappings>(cacheKey) ?? readLegacyCache(cache, logger) ?? unreleasedMappings(loadBundledMappings?.(), 'bundled', logger);
+    let inFlight: { promise: Promise<RefreshResult>, force: boolean } | undefined;
     let disposed = false;
     let timer: unknown;
 
-    const download = async (): Promise<RefreshResult> => {
+    const download = async (force: boolean): Promise<RefreshResult> => {
         const releaseVersion = await source.fetchReleaseVersion();
-        if (current?.releaseVersion === releaseVersion) {
+        if (!force && current?.releaseVersion === releaseVersion) {
             current = { ...current, cachedAt: clock.now() };
             await cache.update(cacheKey, current);
             logger.debug(`Severity mappings are up to date (release ${releaseVersion})`);
             return 'unchanged';
         }
         const mappings = parseMappings(await source.fetchMappings());
+        const changed = !current || !sameMappings(current.mappings, mappings);
         current = { mappings, releaseVersion, cachedAt: clock.now() };
         await cache.update(cacheKey, current);
-        logger.info(`Loaded ${Object.keys(mappings).length} severity mappings (release ${releaseVersion})`);
-        return 'updated';
+        logger.info(`Loaded ${Object.keys(mappings).length} severity mappings (release ${releaseVersion})${changed ? '' : ', unchanged'}`);
+        return changed ? 'updated' : 'unchanged';
     };
 
-    const refresh = (): Promise<RefreshResult> => {
-        inFlight ??= download().finally(() => {
-            inFlight = undefined;
+    // Overlapping refreshes share one download, except that a forced refresh waits for an unforced one and then downloads.
+    const refresh = ({ force = false }: RefreshOptions = {}): Promise<RefreshResult> => {
+        if (inFlight && (inFlight.force || !force)) {
+            return inFlight.promise;
+        }
+        const previous = inFlight?.promise.catch(() => undefined) ?? Promise.resolve();
+        const promise: Promise<RefreshResult> = previous.then(() => download(force)).finally(() => {
+            if (inFlight?.promise === promise) {
+                inFlight = undefined;
+            }
         });
-        return inFlight;
+        inFlight = { promise, force };
+        return promise;
     };
 
     const refreshAndReport = async (): Promise<void> => {
