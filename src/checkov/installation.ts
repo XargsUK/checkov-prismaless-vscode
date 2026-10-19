@@ -64,23 +64,28 @@ const versionCacheTtlMs = 60 * 60 * 1000;
 const minPythonVersion = '3.7.0';
 const ansiEscape = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
-// Checkov can print log lines before its JSON, and the Docker image wraps output in colour codes.
+// Checkov can print log lines before its JSON and notices after it, and the Docker image wraps output in colour codes.
+// Each line that could start the JSON is tried in turn, up to the last line that could end it.
 const parseScanOutput = (stdout: string, useBcIds: boolean | undefined, logger: Logger): FailedCheckovCheck[] => {
     const lines = stdout.replace(ansiEscape, '').split(/\r?\n/);
-    const start = lines.findIndex(line => /^\s*[[{]/.test(line));
-    if (start === -1) {
+    const starts = lines.flatMap((line, index) => /^\s*[[{]/.test(line) ? [index] : []);
+    if (starts.length === 0) {
         throw new Error(`Checkov returned no results: ${stdout.trim().slice(0, 200)}`);
     }
-    if (start > 0) {
-        logger.debug(`Log from Checkov: ${lines.slice(0, start).join('\n')}`);
+    const end = lines.reduce((last, line, index) => /[\]}]\s*$/.test(line) ? index : last, -1);
+    for (const start of starts.filter(index => index <= end)) {
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(lines.slice(start, end + 1).join('\n'));
+        } catch {
+            continue;
+        }
+        if (start > 0) {
+            logger.debug(`Log from Checkov: ${lines.slice(0, start).join('\n')}`);
+        }
+        return parseCheckovResponse(parsed as Parameters<typeof parseCheckovResponse>[0], useBcIds).results.failedChecks;
     }
-    let parsed: unknown;
-    try {
-        parsed = JSON.parse(lines.slice(start).join('\n'));
-    } catch (error) {
-        throw new Error(`Checkov returned output that is not valid JSON: ${lines.slice(start).join('\n').trim().slice(0, 200)}`, { cause: error });
-    }
-    return parseCheckovResponse(parsed as Parameters<typeof parseCheckovResponse>[0], useBcIds).results.failedChecks;
+    throw new Error(`Checkov returned output that is not valid JSON: ${lines.slice(starts[0]).join('\n').trim().slice(0, 200)}`);
 };
 
 const parseRepoName = (repoUrl: string): string | null => {
@@ -295,7 +300,9 @@ export const createCheckovInstaller = ({ host, logger, installationDir, extensio
         commandOptions: { checkovPath: 'docker', dockerImageTag: image.tag },
         // Docker needs no working directory, and nothing should be looked up next to a file outside the workspace.
         workingDirectory: () => host.tmpdir(),
-        stop: (_checkov, containerName) => {
+        // Killing the client covers a container that does not exist yet, and docker kill one that outlives its client.
+        stop: (checkov, containerName) => {
+            checkov.kill();
             host.execFile('docker', ['kill', containerName]).catch(error => {
                 logger[/no such container/i.test(String(error)) ? 'debug' : 'warn'](`Could not kill container ${containerName}`, { error });
             });

@@ -321,6 +321,19 @@ suite('Checkov installation', () => {
         assert.strictEqual((await findings).length, 1);
     });
 
+    test('bracketed log lines before the JSON and notices after it are ignored', async () => {
+        const host = localHost();
+        const installation = await setup(host).installer.install('latest');
+
+        const logged = installation.scan(request, new AbortController().signal);
+        (await started(host)).exit(0, `[WARNING] Failed to download module\n${scanOutput}\n`);
+        assert.strictEqual((await logged).length, 1);
+
+        const noticed = installation.scan(request, new AbortController().signal);
+        (await started(host)).exit(0, `${JSON.stringify(JSON.parse(scanOutput), null, 2)}\nA new version of checkov is available\n`);
+        assert.strictEqual((await noticed).length, 1);
+    });
+
     test('a non-zero exit, or output without results, is reported as an error', async () => {
         const host = localHost();
         const installation = await setup(host).installer.install('latest');
@@ -334,7 +347,7 @@ suite('Checkov installation', () => {
         await assert.rejects(empty, /no results/);
     });
 
-    test('cancelling a Docker scan kills its container', async () => {
+    test('cancelling a Docker scan kills its container and the docker client', async () => {
         const host = dockerHost().respond(/^docker kill /);
         const installation = await setup(host).installer.install('3.2.1');
         const cancel = new AbortController();
@@ -346,7 +359,21 @@ suite('Checkov installation', () => {
 
         await assert.rejects(findings, /cancelled/);
         assert.ok(host.commands.includes(`docker kill ${valueAfter(checkov.args, '--name')}`));
-        assert.deepStrictEqual(checkov.kills, []);
+        assert.deepStrictEqual(checkov.kills, [undefined]);
+    });
+
+    test('cancelling a Docker scan before its container exists still stops the docker client', async () => {
+        const host = dockerHost().respond(/^docker kill /, new Error('Error response from daemon: No such container'));
+        const installation = await setup(host).installer.install('3.2.1');
+        const cancel = new AbortController();
+
+        const findings = installation.scan(request, cancel.signal);
+        const checkov = await started(host);
+        cancel.abort();
+        checkov.exit(null);
+
+        await assert.rejects(findings, /cancelled/);
+        assert.deepStrictEqual(checkov.kills, [undefined]);
     });
 
     test('cancelling a local scan kills the process, without a signal name on Windows', async () => {
