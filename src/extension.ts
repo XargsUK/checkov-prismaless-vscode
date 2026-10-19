@@ -30,6 +30,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     let extensionReady = false;
     let installRunning = false;
+    let latestRequestedUri: string | undefined;
     let reinstallWanted = false;
     const scanSettings = createScanSettings({ reader: vscodeSettingsReader, logger });
 
@@ -107,10 +108,13 @@ export function activate(context: vscode.ExtensionContext): void {
                     logger.debug('Previously installed checkov version matches the newly installed one');
                 }
 
-                setStatusBarVersion(checkovInstallation.displayVersion);
-                setReadyStatusBarItem();
-                extensionReady = true;
-                rescanActiveDocument();
+                // A queued reinstall replaces this installation straight away, so nothing is scanned with it.
+                if (!reinstallWanted) {
+                    setStatusBarVersion(checkovInstallation.displayVersion);
+                    setReadyStatusBarItem();
+                    extensionReady = true;
+                    rescanActiveDocument();
+                }
             } catch (error) {
                 setErrorStatusBarItem();
                 logger.error('Error occurred while preparing Checkov. Verify your settings, or try to reload vscode.', { error });
@@ -196,7 +200,11 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
             // Findings from a scan of the content before the edit would land on the wrong lines.
             scanLifecycle.cancel(changeEvent.document.uri.toString());
-            vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND);
+            vscode.commands.executeCommand(REMOVE_DIAGNOSTICS_COMMAND, changeEvent.document.uri);
+            // A clean document changed because it was reloaded from disk, for example by a formatter that runs on save.
+            if (!changeEvent.document.isDirty) {
+                vscode.commands.executeCommand(RUN_FILE_SCAN_COMMAND);
+            }
         }),
         vscode.workspace.onDidDeleteFiles(deleteEvent => deleteEvent.files.forEach(uri => documentFindings.clear(uri))),
         vscode.workspace.onDidRenameFiles(renameEvent => renameEvent.files.forEach(({ oldUri }) => documentFindings.clear(oldUri))),
@@ -264,6 +272,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (!targetUri) return;
 
         const uri = targetUri.toString();
+        latestRequestedUri = uri;
         documentFindings.clear(targetUri);
         if (!checkovInstallation) return;
         const filePath = targetUri.fsPath;
@@ -310,7 +319,8 @@ export function activate(context: vscode.ExtensionContext): void {
         const active = isActiveDocument(outcome.uri);
         switch (outcome.kind) {
             case 'cancelled':
-                if (active && outcome.reason === 'limit') {
+                // A scan superseded by a newer one for the same document leaves the status to that scan.
+                if (active && (outcome.reason === 'limit' || (outcome.reason === 'superseded' && latestRequestedUri !== outcome.uri))) {
                     setReadyStatusBarItem();
                 }
                 return;
@@ -345,6 +355,12 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         const active = isActiveDocument(outcome.uri);
+        // Checkov scans the file on disk, so its findings would land on the wrong lines of unsaved edits.
+        if (document.isDirty) {
+            logger.debug(`Not showing findings for ${outcome.uri}, which has unsaved changes`);
+            if (active) setReadyStatusBarItem();
+            return;
+        }
         const total = outcome.findings.length;
         const { hidden } = documentFindings.publish(document, outcome.findings, minimumSeverity);
         logger.debug(`Showing ${total - hidden} of ${total} findings (minimum severity: ${minimumSeverity})`);
