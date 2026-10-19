@@ -334,6 +334,19 @@ suite('Checkov installation', () => {
         assert.strictEqual((await noticed).length, 1);
     });
 
+    test('large output that is not valid JSON is rejected without trying every nested line', async () => {
+        const host = localHost();
+        const installation = await setup(host).installer.install('latest');
+        const truncated = `{\n  "results": [\n${'    {\n      "check_id": "CKV_AWS_1"\n    }\n'.repeat(5000)}`;
+
+        const scan = installation.scan(request, new AbortController().signal);
+        const began = Date.now();
+        (await started(host)).exit(0, truncated);
+
+        await assert.rejects(scan, /not valid JSON/);
+        assert.ok(Date.now() - began < 1000, `took ${Date.now() - began}ms`);
+    });
+
     test('a non-zero exit, or output without results, is reported as an error', async () => {
         const host = localHost();
         const installation = await setup(host).installer.install('latest');

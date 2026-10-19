@@ -64,11 +64,14 @@ const versionCacheTtlMs = 60 * 60 * 1000;
 const minPythonVersion = '3.7.0';
 const ansiEscape = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
+const maximumJsonStarts = 10;
+
 // Checkov can print log lines before its JSON and notices after it, and the Docker image wraps output in colour codes.
 // Each line that could start the JSON is tried in turn, up to the last line that could end it.
+// Checkov's JSON starts at the beginning of a line, so indented lines inside it are never tried, and the attempts are capped.
 const parseScanOutput = (stdout: string, useBcIds: boolean | undefined, logger: Logger): FailedCheckovCheck[] => {
     const lines = stdout.replace(ansiEscape, '').split(/\r?\n/);
-    const starts = lines.flatMap((line, index) => /^\s*[[{]/.test(line) ? [index] : []);
+    const starts = lines.flatMap((line, index) => /^[[{]/.test(line) ? [index] : []).slice(0, maximumJsonStarts);
     if (starts.length === 0) {
         throw new Error(`Checkov returned no results: ${stdout.trim().slice(0, 200)}`);
     }
