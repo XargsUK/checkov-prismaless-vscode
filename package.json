@@ -77,71 +77,91 @@
       }
     ],
     "configuration": {
-      "title": "checkov",
+      "title": "Checkov",
       "properties": {
         "checkov-prismaless.checkovVersion": {
-          "title": "Checkov version",
+          "title": "Checkov Version",
           "type": "string",
-          "markdownDescription": "The Checkov scanner version to use (e.g., 2.0.123). Enter 'latest' or leave blank to always use the latest version. Be sure to run the 'Install or Update Checkov' command after changing this value. Use the 'About Checkov' command to view the current version.",
-          "readOnly": true
+          "markdownDescription": "The Checkov version to use, for example `3.2.0`. Leave blank or enter `latest` to use the newest release. Versions older than 2.0.0 are not supported. Checkov is reinstalled when this changes. Run **Checkov: About Checkov** to see the version in use.",
+          "default": "latest"
         },
         "checkov-prismaless.disableErrorMessage": {
-          "title": "Disable error message",
-          "markdownDescription": "Stop showing error message popups (use the 'Open Checkov Log' command to view the log).",
+          "title": "Disable Error Messages",
+          "markdownDescription": "Stop showing a pop-up when Checkov fails to install or scan. Errors are still written to the log (**Checkov: Open Log**).",
           "type": "boolean",
           "default": false
         },
         "checkov-prismaless.clearCacheUponConfigUpdate": {
-          "title": "Clear cache upon config update",
-          "markdownDescription": "Clear the Checkov extension results cache when a setting or config file that changes scan results is updated. Results are never reused across such changes either way, so this only frees the space taken by old results.",
+          "title": "Clear Cache on Settings Change",
+          "markdownDescription": "Clear all cached scan results when a setting or Checkov config file that affects results changes. Results from before the change are never reused either way, so this only frees the space they take.",
           "type": "boolean",
           "default": true
         },
         "checkov-prismaless.maximumConcurrentScans": {
           "title": "Maximum Concurrent Scans",
-          "markdownDescription": "The maximum number of files to scan concurrently. Increasing this value may improve performance but could also increase resource usage. Default: 2",
+          "markdownDescription": "The most files scanned at the same time. When a new scan would go over this limit, the oldest running scan is cancelled. Higher values use more CPU and memory.",
           "type": "number",
-          "default": 2
+          "default": 2,
+          "minimum": 1
         },
         "checkov-prismaless.scanTimeout": {
           "title": "Scan Timeout",
-          "markdownDescription": "The maximum time (in seconds) to wait for a Checkov scan to complete before automatically cancelling it. Default: 60",
+          "markdownDescription": "How long, in seconds, a scan can run before it is cancelled.",
           "type": "number",
-          "default": 60
+          "default": 60,
+          "minimum": 1
         },
         "checkov-prismaless.useDebugLogs": {
-          "title": "Use debug logs",
-          "markdownDescription": "Whether to print debug logs from Checkov for troubleshooting",
-          "type": "boolean"
+          "title": "Checkov Debug Logs",
+          "markdownDescription": "Run Checkov with debug logging, written to the log (**Checkov: Open Log**). Useful for troubleshooting, but it makes the log much larger.",
+          "type": "boolean",
+          "default": false
         },
         "checkov-prismaless.externalChecksDir": {
           "title": "External Checks Directory",
-          "markdownDescription": "Path to external checks to be added. Checkov loads and runs Python from this directory. A workspace can only set a path inside the workspace folder (relative paths are resolved against it); any other location has to be set in user settings.",
+          "markdownDescription": "A directory of custom checks for Checkov to run alongside its built-in ones (`--external-checks-dir`). Checkov runs the Python in this directory. Workspace settings can only point inside the workspace folder, and relative paths are resolved against it. Any other location has to be set in user settings.",
           "type": "string",
           "scope": "resource"
         },
+        "checkov-prismaless.useBridgecrewIDs": {
+          "title": "Use Bridgecrew IDs",
+          "markdownDescription": "Report findings with legacy Bridgecrew IDs (`BC_...`) instead of Checkov IDs (`CKV_...`). The severity mappings use Checkov IDs, so findings fall back to the severity Checkov reports, which is often unknown.",
+          "type": "boolean",
+          "default": false
+        },
+        "checkov-prismaless.certificate": {
+          "title": "CA Certificate",
+          "markdownDescription": "Path to a CA certificate file for Checkov to trust (`--ca-certificate`). Only read from user settings, so a workspace cannot change it.",
+          "type": "string"
+        },
+        "checkov-prismaless.noCertVerify": {
+          "title": "Skip TLS Certificate Verification",
+          "markdownDescription": "Turn off TLS certificate verification for Checkov's network requests (`--no-cert-verify`). Only use this for testing, as invalid or forged certificates cannot be detected. Only read from user settings, so a workspace cannot change it.",
+          "type": "boolean",
+          "default": false
+        },
         "checkov-prismaless.skipFrameworks": {
           "title": "Skip Frameworks",
-          "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces. See [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `skip-framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
+          "markdownDescription": "Frameworks to leave out of scans, separated by spaces or commas (for example `secrets dockerfile`). Overrides any `skip-framework` in your [Checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file). See [Checkov frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for the names.",
           "type": "string",
           "scope": "resource"
         },
         "checkov-prismaless.frameworks": {
           "title": "Frameworks",
-          "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces.  \nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
+          "markdownDescription": "Only scan with these frameworks, separated by spaces or commas (for example `terraform kubernetes`). Overrides any `framework` in your [Checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file). See [Checkov frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for the names.",
           "type": "string",
           "scope": "resource"
         },
         "checkov-prismaless.skipChecks": {
           "title": "Skip Checks",
-          "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks separated by commas or spaces. Defaults to `BC_LIC*` to skip license compliance checks.  \n\n**Priority:** If your `.checkov.yaml` config file contains `skip-check`, it will take complete precedence over this VS Code setting. Otherwise, this setting will be used. To rely entirely on your config file, clear this field.",
+          "markdownDescription": "Check IDs to skip, separated by spaces or commas. Wildcards work, as in the default `BC_LIC*`, which skips licence compliance checks.  \n\n**Priority:** if a `.checkov.yaml` or `.checkov.yml` that applies to the file contains `skip-check`, it takes complete precedence and this setting is ignored. To rely entirely on your config file, clear this setting.",
           "type": "string",
           "default": "BC_LIC*",
           "scope": "resource"
         },
         "checkov-prismaless.skipPaths": {
           "title": "Skip Paths",
-          "markdownDescription": "Glob patterns for files that should not be scanned, relative to the workspace folder (e.g., `**/*.md`). A skipped file is marked as skipped in the status bar.",
+          "markdownDescription": "Glob patterns, relative to the workspace folder, for files that should not be scanned (for example `**/*.md`). The status bar shows when a file is skipped.",
           "type": "array",
           "items": {
             "type": "string"
@@ -151,7 +171,7 @@
         },
         "checkov-prismaless.minimumSeverity": {
           "title": "Minimum Severity",
-          "markdownDescription": "Only show findings at or above this severity. Findings with an unknown severity are always shown. The status bar shows when findings are hidden.",
+          "markdownDescription": "Only show findings at or above this severity. `None` shows every finding. Findings with an unknown severity are always shown, and the status bar says when findings are hidden.",
           "type": "string",
           "enum": [
             "None",
@@ -165,7 +185,7 @@
           "scope": "resource"
         },
         "checkov-prismaless.dockerSelinux": {
-          "title": "Docker SELinux handling",
+          "title": "Docker SELinux Handling",
           "markdownDescription": "How to give the Checkov container access to your files on hosts that enforce SELinux. Only needed if scans fail with permission errors when using Docker.",
           "type": "string",
           "enum": [

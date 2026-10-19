@@ -34,7 +34,7 @@ The Checkov extension will invoke the latest version of ```Checkov```.
 ### Usage
 
 * Open a file you wish to scan with checkov in VSCode.
-* Open the command palette `(Ctrl+Shift+P)` or `(Command+Shift+P)` and run the command `Checkov Scan`.
+* Open the command palette `(Ctrl+Shift+P)` or `(Command+Shift+P)` and run the command `Checkov: Run Scan`.
 * Scan results should now appear in your editor.
 * Click a scan to see its details. Details will include the violating policy and a link to step-by-step fix guidelines.
 * In most cases, the Details will include a fix option. This will either add, remove or replace an unwanted configuration, based on the Checkov fix dictionaries.
