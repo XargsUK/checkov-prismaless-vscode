@@ -102,8 +102,18 @@ export const createScanLifecycle = <TOptions>({ invoke, cache, limits, logger, c
         }
     };
 
+    // Only the latest request runs once the debounce ends, as with one debounce for all files.
+    // Scans that have started are left to finish, so their results are still cached.
+    const cancelPendingScansOfOtherDocuments = (uri: string): void => {
+        for (const pending of active.filter(item => item.uri !== uri && !item.started)) {
+            logger.debug(`Cancelling pending scan for ${pending.uri}`);
+            stop(pending, { kind: 'cancelled', uri: pending.uri, reason: 'superseded' });
+        }
+    };
+
     const scan = (request: ScanRequest<TOptions>): Promise<ScanOutcome> => {
         cancelScansFor(request.uri, 'superseded');
+        cancelPendingScansOfOtherDocuments(request.uri);
 
         const cached = request.useCache ? getCachedResults(cache, request.cacheKey, request.filePath, clock.now(), logger) : undefined;
         if (cached) {

@@ -102,20 +102,37 @@ suite('scan lifecycle', () => {
         assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.options.label), ['latest']);
     });
 
-    test('requests for two documents within the debounce both run', async () => {
+    test('a request cancels other documents\' scans still waiting on the debounce, so only the last runs', async () => {
         const { clock, checkov, lifecycle } = setup();
 
-        lifecycle.scan(request('file:///repo/main.tf'));
-        lifecycle.scan(request('file:///repo/variables.tf'));
+        const first = lifecycle.scan(request('file:///repo/a.tf'));
+        const second = lifecycle.scan(request('file:///repo/b.tf'));
+        lifecycle.scan(request('file:///repo/c.tf'));
         await clock.advance(100);
 
-        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.filePath), ['/repo/main.tf', '/repo/variables.tf']);
+        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.filePath), ['/repo/c.tf']);
+        assert.deepStrictEqual(await first, { kind: 'cancelled', uri: 'file:///repo/a.tf', reason: 'superseded' });
+        assert.deepStrictEqual(await second, { kind: 'cancelled', uri: 'file:///repo/b.tf', reason: 'superseded' });
+    });
+
+    test('a request leaves other documents\' running scans alone', async () => {
+        const { clock, checkov, lifecycle } = setup();
+
+        const running = lifecycle.scan(request('file:///repo/a.tf'));
+        await clock.advance(100);
+        lifecycle.scan(request('file:///repo/b.tf'));
+        await clock.advance(100);
+        checkov.invocations[0].resolve([finding('CKV_AWS_1')]);
+
+        assert.deepStrictEqual(await running, { kind: 'findings', uri: 'file:///repo/a.tf', findings: [finding('CKV_AWS_1')] });
+        assert.deepStrictEqual(checkov.invocations.map(invocation => invocation.filePath), ['/repo/a.tf', '/repo/b.tf']);
     });
 
     test('the concurrency cap cancels the oldest running scan, using the cap at the time the scan starts', async () => {
         const { clock, checkov, limits, lifecycle } = setup({ timeoutSeconds: 60, maximumConcurrentScans: 2 });
 
         const oldest = lifecycle.scan(request('file:///repo/a.tf'));
+        await clock.advance(100);
         lifecycle.scan(request('file:///repo/b.tf'));
         await clock.advance(100);
         lifecycle.scan(request('file:///repo/c.tf'));
