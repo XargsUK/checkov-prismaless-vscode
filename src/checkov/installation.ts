@@ -65,9 +65,10 @@ const minPythonVersion = '3.7.0';
 const ansiEscape = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
 const maximumJsonStarts = 10;
+const maximumJsonEnds = 3;
 
 // Checkov can print log lines before its JSON and notices after it, and the Docker image wraps output in colour codes.
-// Each line that could start the JSON is tried in turn, up to the last line that could end it.
+// Each line that could start the JSON is tried in turn against the last few lines that could end it.
 // Checkov's JSON starts at the beginning of a line, so indented lines inside it are never tried, and the attempts are capped.
 const parseScanOutput = (stdout: string, useBcIds: boolean | undefined, logger: Logger): FailedCheckovCheck[] => {
     const lines = stdout.replace(ansiEscape, '').split(/\r?\n/);
@@ -75,18 +76,20 @@ const parseScanOutput = (stdout: string, useBcIds: boolean | undefined, logger: 
     if (starts.length === 0) {
         throw new Error(`Checkov returned no results: ${stdout.trim().slice(0, 200)}`);
     }
-    const end = lines.reduce((last, line, index) => /[\]}]\s*$/.test(line) ? index : last, -1);
-    for (const start of starts.filter(index => index <= end)) {
-        let parsed: unknown;
-        try {
-            parsed = JSON.parse(lines.slice(start, end + 1).join('\n'));
-        } catch {
-            continue;
+    const ends = lines.flatMap((line, index) => /[\]}]\s*$/.test(line) ? [index] : []).slice(-maximumJsonEnds).reverse();
+    for (const start of starts) {
+        for (const end of ends.filter(index => index >= start)) {
+            let parsed: unknown;
+            try {
+                parsed = JSON.parse(lines.slice(start, end + 1).join('\n'));
+            } catch {
+                continue;
+            }
+            if (start > 0) {
+                logger.debug(`Log from Checkov: ${lines.slice(0, start).join('\n')}`);
+            }
+            return parseCheckovResponse(parsed as Parameters<typeof parseCheckovResponse>[0], useBcIds).results.failedChecks;
         }
-        if (start > 0) {
-            logger.debug(`Log from Checkov: ${lines.slice(0, start).join('\n')}`);
-        }
-        return parseCheckovResponse(parsed as Parameters<typeof parseCheckovResponse>[0], useBcIds).results.failedChecks;
     }
     throw new Error(`Checkov returned output that is not valid JSON: ${lines.slice(starts[0]).join('\n').trim().slice(0, 200)}`);
 };

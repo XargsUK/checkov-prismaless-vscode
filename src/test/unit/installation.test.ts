@@ -332,6 +332,10 @@ suite('Checkov installation', () => {
         const noticed = installation.scan(request, new AbortController().signal);
         (await started(host)).exit(0, `${JSON.stringify(JSON.parse(scanOutput), null, 2)}\nA new version of checkov is available\n`);
         assert.strictEqual((await noticed).length, 1);
+
+        const bracketedNotice = installation.scan(request, new AbortController().signal);
+        (await started(host)).exit(0, `${scanOutput}\nUpdate available [3.2.2]\n`);
+        assert.strictEqual((await bracketedNotice).length, 1);
     });
 
     test('large output that is not valid JSON is rejected without trying every nested line', async () => {
