@@ -1,9 +1,9 @@
-import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from 'winston';
-import { CheckovScanRequest } from './checkov/installation';
+import { CheckovInstallation, CheckovScanRequest } from './checkov/installation';
 import { DockerSelinuxMode, resolveExternalChecksDir } from './checkov/scanCommand';
+import { fileHashOrUnreadable, hashContent } from './fileHash';
 import { configHasSkipCheck, findConfigFiles } from './parseCheckovConfig';
 
 export interface SettingValues<T> {
@@ -36,8 +36,11 @@ export interface ConfigurationChange {
     affectsConfiguration(section: string): boolean;
 }
 
+export type ScanInstallation = Pick<CheckovInstallation, 'method' | 'displayVersion'>;
+
 export interface ScanSettings {
-    resolve(filePath: string): ScanSettingsSnapshot;
+    // Results from one Checkov installation are never reused for another, so the installation is part of the fingerprint.
+    resolve(filePath: string, installation: ScanInstallation): ScanSettingsSnapshot;
     classifyChange(change: ConfigurationChange): Set<SettingsChangeEffect>;
 }
 
@@ -71,41 +74,39 @@ export type SettingName = keyof typeof settingEffects;
 
 export const settingNames = Object.keys(settingEffects) as SettingName[];
 
-const hash = (value: string | Buffer): string => crypto.createHash('md5').update(value).digest('hex');
-
-const fileHash = (filePath: string): string => {
-    try {
-        return hash(fs.readFileSync(filePath));
-    } catch {
-        return 'unreadable';
-    }
-};
-
 const maximumStampedFiles = 1000;
 
 // Checkov loads external checks from the directory at scan time, so edits to them have to change the fingerprint.
 // Python writes compiled files to __pycache__ when it loads them, which would otherwise change it after every first scan.
+// Symlinks are followed, and each real directory is walked once so a loop cannot recurse forever.
 const directoryStamp = (directory: string): string[] => {
     const stamps: string[] = [];
+    const walked = new Set<string>();
     const walk = (current: string): void => {
-        let entries: fs.Dirent[];
+        let entries: string[];
         try {
-            entries = fs.readdirSync(current, { withFileTypes: true });
+            const realDirectory = fs.realpathSync(current);
+            if (walked.has(realDirectory)) return;
+            walked.add(realDirectory);
+            entries = fs.readdirSync(current).sort((a, b) => a.localeCompare(b));
         } catch {
             return;
         }
-        for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+        for (const name of entries) {
             if (stamps.length >= maximumStampedFiles) return;
-            const entryPath = path.join(current, entry.name);
-            if (entry.isDirectory() && entry.name !== '__pycache__') {
-                walk(entryPath);
-            } else if (entry.isFile()) {
-                try {
-                    const { size, mtimeMs } = fs.statSync(entryPath);
-                    stamps.push(`${path.relative(directory, entryPath)}:${size}:${mtimeMs}`);
-                } catch {
-                    stamps.push(`${path.relative(directory, entryPath)}:unreadable`);
-                }
+            const entryPath = path.join(current, name);
+            const relativePath = path.relative(directory, entryPath);
+            let stats: fs.Stats;
+            try {
+                stats = fs.statSync(entryPath);
+            } catch {
+                stamps.push(`${relativePath}:unreadable`);
+                continue;
+            }
+            if (stats.isDirectory()) {
+                if (name !== '__pycache__') walk(entryPath);
+            } else if (stats.isFile()) {
+                stamps.push(`${relativePath}:${stats.size}:${stats.mtimeMs}`);
             }
         }
     };
@@ -128,7 +129,7 @@ export const createScanSettings = ({ reader, logger }: ScanSettingsDependencies)
     const readUserOnly = <T>(name: SettingName, filePath: string): T | undefined => reader.inspect<T>(name, filePath)?.globalValue;
 
     return {
-        resolve: filePath => {
+        resolve: (filePath, installation) => {
             const workspaceFolder = reader.workspaceFolder(filePath);
             const externalChecksDir = reader.inspect<string>('externalChecksDir', filePath);
             const configPaths = findConfigFiles(filePath, workspaceFolder);
@@ -155,9 +156,10 @@ export const createScanSettings = ({ reader, logger }: ScanSettingsDependencies)
                 },
                 skipPaths: Array.isArray(skipPaths) ? skipPaths.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0) : [],
                 minimumSeverity: read<string>('minimumSeverity', filePath) ?? 'None',
-                fingerprint: hash(JSON.stringify({
+                fingerprint: hashContent(JSON.stringify({
                     resultOptions,
-                    configFiles: configPaths.map(fileHash),
+                    installation: `${installation.method}:${installation.displayVersion ?? 'unknown'}`,
+                    configFiles: configPaths.map(fileHashOrUnreadable),
                     externalChecks: resultOptions.externalChecksDir ? directoryStamp(resultOptions.externalChecksDir) : []
                 }))
             };

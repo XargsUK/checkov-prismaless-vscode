@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import winston from 'winston';
-import { createScanSettings, SettingName, settingNames, SettingsReader, settingsSection, SettingValues } from '../../scanSettings';
+import { createScanSettings, ScanInstallation, SettingName, settingNames, SettingsReader, settingsSection, SettingValues } from '../../scanSettings';
 
 type Values = Record<string, unknown>;
 
@@ -37,12 +37,14 @@ class InMemorySettings implements SettingsReader {
 
 const logger = winston.createLogger({ silent: true });
 
+const installation = { method: 'docker', displayVersion: '3.2.1' } as const;
+
 suite('scan settings', () => {
     let workspaceFolder: string;
     let filePath: string;
     let settings: InMemorySettings;
 
-    const resolve = (file = filePath) => createScanSettings({ reader: settings, logger }).resolve(file);
+    const resolve = (file = filePath, current: ScanInstallation = installation) => createScanSettings({ reader: settings, logger }).resolve(file, current);
 
     setup(() => {
         workspaceFolder = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'scan-settings-')));
@@ -168,6 +170,50 @@ suite('scan settings', () => {
         assert.notStrictEqual(resolve().fingerprint, before.fingerprint);
     });
 
+    test('a different Checkov installation gives a different fingerprint', () => {
+        const fingerprints = [
+            resolve(filePath, { method: 'docker', displayVersion: '3.2.1' }),
+            resolve(filePath, { method: 'pip3', displayVersion: '3.2.1' }),
+            resolve(filePath, { method: 'docker', displayVersion: '3.2.2' }),
+            resolve(filePath, { method: 'docker', displayVersion: undefined })
+        ].map(snapshot => snapshot.fingerprint);
+
+        assert.strictEqual(new Set(fingerprints).size, fingerprints.length);
+    });
+
+    test('changing a check reached through a symlink in the external checks directory changes the fingerprint', () => {
+        const shared = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'shared-checks-')));
+        try {
+            fs.mkdirSync(path.join(workspaceFolder, 'checks'));
+            fs.writeFileSync(path.join(shared, 'Linked.py'), 'class Linked: pass\n');
+            fs.writeFileSync(path.join(shared, 'Single.py'), 'class Single: pass\n');
+            fs.symlinkSync(shared, path.join(workspaceFolder, 'checks', 'shared'), 'dir');
+            fs.symlinkSync(path.join(shared, 'Single.py'), path.join(workspaceFolder, 'checks', 'Single.py'), 'file');
+            settings.user.externalChecksDir = 'checks';
+
+            const before = resolve().fingerprint;
+            fs.writeFileSync(path.join(shared, 'Linked.py'), 'class Linked:\n    severity = "HIGH"\n');
+            const afterDirectoryEdit = resolve().fingerprint;
+            fs.writeFileSync(path.join(shared, 'Single.py'), 'class Single:\n    severity = "HIGH"\n');
+
+            assert.notStrictEqual(afterDirectoryEdit, before);
+            assert.notStrictEqual(resolve().fingerprint, afterDirectoryEdit);
+        } finally {
+            fs.rmSync(shared, { recursive: true, force: true });
+        }
+    });
+
+    test('a symlink loop in the external checks directory is walked once', () => {
+        const checks = path.join(workspaceFolder, 'checks');
+        fs.mkdirSync(checks);
+        fs.writeFileSync(path.join(checks, 'Check.py'), 'class Check: pass\n');
+        settings.user.externalChecksDir = 'checks';
+        const withoutLoop = resolve().fingerprint;
+        fs.symlinkSync(checks, path.join(checks, 'loop'), 'dir');
+
+        assert.strictEqual(resolve().fingerprint, withoutLoop);
+    });
+
     test('changing checkovVersion needs a reinstall', () => {
         assert.deepStrictEqual([...classify('checkovVersion')], ['installation']);
     });
@@ -217,10 +263,10 @@ suite('scan settings definition', () => {
                 const filePath = path.join(workspaceFolder, 'main.tf');
                 const settings = new InMemorySettings([workspaceFolder]);
                 const scanSettings = createScanSettings({ reader: settings, logger });
-                const before = scanSettings.resolve(filePath).fingerprint;
+                const before = scanSettings.resolve(filePath, installation).fingerprint;
                 settings.user[name] = sampleValues[name];
 
-                assert.strictEqual(scanSettings.resolve(filePath).fingerprint !== before, classify(name).has('results'));
+                assert.strictEqual(scanSettings.resolve(filePath, installation).fingerprint !== before, classify(name).has('results'));
             } finally {
                 fs.rmSync(workspaceFolder, { recursive: true, force: true });
             }

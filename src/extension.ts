@@ -244,8 +244,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const uri = targetUri.toString();
         documentFindings.clear(targetUri);
+        if (!checkovInstallation) return;
         const filePath = targetUri.fsPath;
-        const settings = scanSettings.resolve(filePath);
+        const settings = scanSettings.resolve(filePath, checkovInstallation);
 
         if (!fileUri && editor) {
             const skipPattern = findMatchingSkipPath(editor.document, settings.skipPaths);

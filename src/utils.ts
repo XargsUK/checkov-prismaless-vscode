@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
-import * as fs from 'fs';
 import winston from 'winston';
+import { fileHash } from './fileHash';
 import { showUnsupportedFileMessage } from './userInterface';
 
 
@@ -44,12 +43,5 @@ export const getLogger = (logFileDir: string, logFileName: string): winston.Logg
     ]
 });
 
-export const getFileHash = (filename: string): string => {
-    const fileBuffer = fs.readFileSync(filename);
-    const hashSum = crypto.createHash('md5');
-    hashSum.update(fileBuffer);
-    return hashSum.digest('hex');
-};
-
 export const getScanCacheKey = (filename: string, settingsFingerprint: string): string =>
-    `${getFileHash(filename)}:${settingsFingerprint}`;
+    `${fileHash(filename)}:${settingsFingerprint}`;
