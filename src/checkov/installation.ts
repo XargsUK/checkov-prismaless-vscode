@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as semver from 'semver';
 import { Logger } from 'winston';
 import { Clock, systemClock } from '../clock';
-import { configHasSkipCheck } from '../parseCheckovConfig';
 import { parseCheckovResponse } from './checkovParser';
 import { FailedCheckovCheck } from './models';
 import { ProcessHost, RunningProcess } from './processHost';
@@ -324,8 +323,7 @@ export const createCheckovInstaller = ({ host, logger, installationDir, extensio
             containerName,
             extensionVersion,
             repoId,
-            configFilePath: request.configPaths[0],
-            skipChecks: configHasSkipCheck(request.configPaths, logger) ? [] : request.skipChecks
+            configFilePath: request.configPaths[0]
         }, pathLib);
         logger.info(`Running checkov: ${command} ${args.join(' ')}`);
         const checkov = host.spawn(command, args, {

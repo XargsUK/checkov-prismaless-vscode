@@ -20,8 +20,18 @@ const finding = (overrides: Partial<FailedCheckovCheck> = {}): FailedCheckovChec
 
 const openDocument = (content: string) => vscode.workspace.openTextDocument({ content, language: 'terraform' });
 
-const codeActionsFor = async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<vscode.CodeAction[]> =>
-    await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, diagnostic.range) ?? [];
+// Diagnostics reach the code action context asynchronously after collection.set, so retry until they arrive.
+const codeActionsFor = async (document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<vscode.CodeAction[]> => {
+    const checkName = diagnostic.message.replace(/^\[\w+\] /, '');
+    for (let attempt = 0; attempt < 40; attempt++) {
+        const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, diagnostic.range) ?? [];
+        if (actions.some(action => action.title.endsWith(` - ${checkName}`))) {
+            return actions;
+        }
+        await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    throw new Error(`No code actions arrived for "${checkName}"`);
+};
 
 const editsFor = (action: vscode.CodeAction | undefined, document: vscode.TextDocument) =>
     action?.edit?.get(document.uri).map(edit => ({
@@ -111,11 +121,12 @@ suite('findings for a document', () => {
 
     test('Kubernetes findings are not offered a skip comment', async () => {
         const document = await openDocument('apiVersion: v1\nkind: Pod\n');
-        documentFindings.publish(document, [finding({ checkId: 'CKV_K8S_8', fileLineRange: [1, 2] })], 'None');
+        documentFindings.publish(document, [finding({ checkId: 'CKV_K8S_8', fileLineRange: [1, 2], fixedDefinition: 'fixed\n' })], 'None');
 
         const [diagnostic] = collection.get(document.uri) ?? [];
         const titles = (await codeActionsFor(document, diagnostic)).map(action => action.title);
 
+        assert.ok(titles.some(title => title.startsWith('Apply fix')), titles.join(', '));
         assert.ok(!titles.some(title => title.startsWith('Generate skip comment')), titles.join(', '));
     });
 

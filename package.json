@@ -93,7 +93,7 @@
         },
         "checkov-prismaless.clearCacheUponConfigUpdate": {
           "title": "Clear cache upon config update",
-          "markdownDescription": "Clear the Checkov extension results cache when the Checkov configuration is updated. This ensures consistant results but will require Checkov to re-scan all files.",
+          "markdownDescription": "Clear the Checkov extension results cache when a setting or config file that changes scan results is updated. Results are never reused across such changes either way, so this only frees the space taken by old results.",
           "type": "boolean",
           "default": true
         },
@@ -123,18 +123,21 @@
         "checkov-prismaless.skipFrameworks": {
           "title": "Skip Frameworks",
           "markdownDescription": "Filter scan to skip specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces. See [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `skip-framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
-          "type": "string"
+          "type": "string",
+          "scope": "resource"
         },
         "checkov-prismaless.frameworks": {
           "title": "Frameworks",
           "markdownDescription": "Filter scan to run only on specific frameworks (e.g., 'arm json secrets serverless'). Add multiple frameworks using spaces.  \nSee [Checkov Frameworks](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html) for more information.  \nSetting this configuration property will overide any `framework` entry defined in your [checkov config file](https://github.com/bridgecrewio/checkov?tab=readme-ov-file#configuration-using-a-config-file).",
-          "type": "string"
+          "type": "string",
+          "scope": "resource"
         },
         "checkov-prismaless.skipChecks": {
           "title": "Skip Checks",
           "markdownDescription": "Filter scan to run all checks except those listed (deny list). Add multiple checks separated by commas or spaces. Defaults to `BC_LIC*` to skip license compliance checks.  \n\n**Priority:** If your `.checkov.yaml` config file contains `skip-check`, it will take complete precedence over this VS Code setting. Otherwise, this setting will be used. To rely entirely on your config file, clear this field.",
           "type": "string",
-          "default": "BC_LIC*"
+          "default": "BC_LIC*",
+          "scope": "resource"
         },
         "checkov-prismaless.skipPaths": {
           "title": "Skip Paths",
@@ -158,7 +161,8 @@
             "High",
             "Critical"
           ],
-          "default": "None"
+          "default": "None",
+          "scope": "resource"
         },
         "checkov-prismaless.dockerSelinux": {
           "title": "Docker SELinux handling",

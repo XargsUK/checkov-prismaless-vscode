@@ -51,14 +51,5 @@ export const getFileHash = (filename: string): string => {
     return hashSum.digest('hex');
 };
 
-const getFileHashOrUnreadable = (filename: string): string => {
-    try {
-        return getFileHash(filename);
-    } catch {
-        return 'unreadable';
-    }
-};
-
-// Results depend on the config files as well as the scanned file, so all of them feed the cache key.
-export const getScanCacheKey = (filename: string, configPaths: string[]): string =>
-    [getFileHash(filename), ...configPaths.map(getFileHashOrUnreadable)].join(':');
+export const getScanCacheKey = (filename: string, settingsFingerprint: string): string =>
+    `${getFileHash(filename)}:${settingsFingerprint}`;
