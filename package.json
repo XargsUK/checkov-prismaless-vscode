@@ -205,7 +205,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && npm run compile",
+    "vscode:prepublish": "npm run update-severity-mappings && node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
